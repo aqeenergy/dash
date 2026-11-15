@@ -1,6 +1,5 @@
 # FLAMA web app (Streamlit) — used by `streamlit run app.py` and Streamlit Community Cloud.
 # The AI voice/text server has its own list: voz/requirements.txt
-# The legacy FastAPI dashboard keeps its list in backend/requirements.txt
 streamlit==1.67.0
 pandas==3.1.1
 numpy==2.5.4

@@ -15,12 +15,9 @@ Animation Architecture (60 FPS Compositor-Only):
 
 from __future__ import annotations
 
-import base64
 import html
 import json
 import logging
-import math
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -48,72 +45,6 @@ except Exception:
     _PSI_CARDS = []
 
 # ---------------------------------------------------------------------------
-# Flammy Offline Sentinel Initialization (Safe, Non-Blocking Singleton)
-# ---------------------------------------------------------------------------
-try:
-    from flammy_agent import FlammyAgent
-except Exception:
-    FlammyAgent = None  # type: ignore[assignment]
-
-FLAMMY_PORT = 8765
-
-
-def _map_flama_material(material_name: str) -> list[str]:
-    """Translate FLAMA cabin material names to Flammy material categories + raw name."""
-    low = (material_name or "").lower()
-    if any(k in low for k in ("cotton", "nomex", "fabric", "cloth", "sibal")):
-        return ["fabric", material_name]
-    if any(k in low for k in ("webbing", "kevlar", "pbi", "strap", "harness")):
-        return ["webbing", material_name]
-    if any(k in low for k in ("battery", "li-ion", "lithium", "laptop")):
-        return ["battery", material_name]
-    if any(k in low for k in ("wire", "wiring", "cable", "circuit", "electrical")):
-        return ["electrical", material_name]
-    return ["polymer", material_name]
-
-
-@st.cache_resource
-def _init_flammy_singleton():
-    """Create ONE FlammyAgent for the whole app and start its local HTTP/SSE server."""
-    if FlammyAgent is None:
-        return None
-    ag = FlammyAgent(default_gravity="micro")
-    try:
-        ag.serve(host="127.0.0.1", port=FLAMMY_PORT, background=True)
-    except OSError:
-        logging.getLogger("flammy").debug("Flammy HTTP server already listening on port %s", FLAMMY_PORT)
-    except Exception:
-        logging.getLogger("flammy").exception("Could not start Flammy background server")
-    return ag
-
-
-agent = _init_flammy_singleton()
-
-
-def _noop_decorator(func=None, **_kwargs):
-    """Fallback decorator if Flammy is disabled so the app never breaks."""
-    if func is not None:
-        return func
-    return lambda f: f
-
-
-_watch_sim_deco = (
-    agent.watch_simulation(
-        params=lambda material_name, o2_pct, pressure_kpa, gravity_g=0.0, *a, **k: {
-            "gravity": gravity_g,
-            "material": _map_flama_material(material_name),
-            "o2": o2_pct,
-            "pressure_kpa": pressure_kpa,
-            "ventilation": k.get("ventilation", "forced"),
-        }
-    )
-    if agent is not None
-    else _noop_decorator
-)
-
-_watch_chat_deco = agent.watch_chat if agent is not None else _noop_decorator
-
-# ---------------------------------------------------------------------------
 # Database Loader (No hardcoded mock data allowed)
 # ---------------------------------------------------------------------------
 DB_DIR = Path(__file__).resolve().parent / "base_de_datos"        # READ-ONLY
@@ -130,104 +61,6 @@ def _load_db_json(filename: str, default: Any) -> Any:
             pass
     return default
 
-
-# ---------------------------------------------------------------------------
-# Physical Constants & Tunable Assumptions (Real physics, not mock data)
-# ---------------------------------------------------------------------------
-PPO2_TARGET_KPA = 21.3
-PPO2_MIN_KPA = 18.0
-PPO2_MAX_KPA = 23.5
-CABIN_P_MIN_KPA = 56.5
-CABIN_P_MAX_KPA = 101.325
-SAFETY_MARGIN_PCT = 3.0
-LOW_G_PENALTY_PCT = 2.0
-KPA_PER_PSI = 6.894757
-N2_MOLAR_KG = 0.028014
-R_GAS = 8.314462
-
-# 60-25-10-5 Space Telemetry Palette
-PALETTE = {
-    "space_900": "#07080A",
-    "space_800": "#101216",
-    "space_700": "#1A1D23",
-    "space_500": "#3A3F48",
-    "paper_50": "#F4F3EF",
-    "paper_200": "#D9D8D3",
-    "glow_100": "#E8F1FA",
-    "sky_200": "#BCD6EE",
-    "sky_400": "#6FA3D8",
-    "sky_600": "#2F63B0",
-    "sky_800": "#12306E",
-    "sky_950": "#0A1838",
-    "flare_200": "#FFC27A",
-    "flare_400": "#FF8A2A",
-    "flare_500": "#F2600F",
-    "flare_800": "#8C2A08",
-    # Legacy aliases
-    "bg": "#07080A",
-    "panel": "#101216",
-    "panel_soft": "#0B0D11",
-    "sackboy": "#3A2216",
-    "sackboy_edge": "#8C6D53",
-    "edge": "#1A1D23",
-    "ink": "#F4F3EF",
-    "muted": "#D9D8D3",
-    "accent": "#6FA3D8",
-    "safe": "#6FA3D8",
-    "caution": "#FF8A2A",
-    "danger": "#F2600F",
-    "blue_0g": "#6FA3D8",
-    "blue_core": "#E8F1FA",
-}
-
-RISK_LEVELS = ("Low", "Medium", "High")
-_RISK_ALIASES = {
-    "low": "Low",
-    "nominal": "Low",
-    "medium": "Medium",
-    "caution": "Medium",
-    "high": "High",
-    "critical": "High",
-}
-RISK_LABEL = {"Low": "NOMINAL", "Medium": "CAUTION", "High": "CRITICAL"}
-RISK_COLOR = {
-    "Low": PALETTE["sky_400"],
-    "Medium": PALETTE["flare_400"],
-    "High": PALETTE["flare_500"],
-}
-
-GRAVITY_PRESETS = {
-    "0 g · ORBITAL (ISS)": 0.0,
-    "0.16 g · LUNAR": 0.16,
-    "0.38 g · MARTIAN": 0.38,
-    "1 g · TERRESTRIAL": 1.0,
-}
-
-# Load Presets dynamically from DB
-_db_presets = _load_db_json("mission_presets.json", {})
-MISSION_PRESETS: dict[str, dict[str, Any] | None] = {"Custom Configuration": None}
-if isinstance(_db_presets, dict):
-    MISSION_PRESETS.update(_db_presets)
-
-
-@dataclass(frozen=True)
-class Material:
-    name: str
-    loi_pct: float
-
-
-# Load Materials dynamically from DB
-_db_materials = _load_db_json("materials.json", {})
-if isinstance(_db_materials, dict) and _db_materials:
-    MATERIALS: dict[str, Material] = {
-        m_val.get("name", m_key) if isinstance(m_val, dict) else str(m_key): Material(
-            name=m_val.get("name", m_key) if isinstance(m_val, dict) else str(m_key),
-            loi_pct=float(m_val.get("loi_pct", 100.0)) if isinstance(m_val, dict) else 100.0,
-        )
-        for m_key, m_val in _db_materials.items()
-    }
-else:
-    MATERIALS = {"Awaiting PSI Database...": Material("Awaiting PSI Database...", 100.0)}
 
 # Load Experiments dynamically for Bubble 1. Pills = curated flight-program
 # observers (fm2, luci, ...); the PSI-XX investigations get the ranked card
@@ -330,346 +163,7 @@ _PSI_BROWSER_HTML = """
 """
 
 
-@dataclass(frozen=True)
-class SweetSpot:
-    o2_pct: float
-    pressure_kpa: float
-    n2_kpa: float
-
-
-@dataclass(frozen=True)
-class O2Assessment:
-    material: str
-    gravity_g: float
-    o2_pct: float
-    pressure_kpa: float
-    ppo2_kpa: float
-    limit_pct: float
-    margin_pct: float
-    risk_level: str
-    severity: float
-    physiology: str
-    sweet_spot: SweetSpot | None
-    headline: str
-    advice: str
-
-
-# ---------------------------------------------------------------------------
-# Automatic 3D Cover Video Loader (`D:\nasa_dashboard\flama_cover.mp4`)
-# ---------------------------------------------------------------------------
-def _load_cover_video_b64() -> str:
-    proj_dir = Path(__file__).resolve().parent
-
-    priority_files = [
-        proj_dir / "flama_cover.mp4",
-        proj_dir / "video_1.mp4",
-        proj_dir / "assets" / "flama_cover.mp4",
-        proj_dir / "assets" / "video_1.mp4",
-    ]
-    for pf in priority_files:
-        if pf.exists() and pf.is_file():
-            try:
-                return base64.b64encode(pf.read_bytes()).decode("ascii")
-            except Exception:
-                pass
-
-    local_mp4s = (
-        list(proj_dir.glob("*.mp4"))
-        + list(proj_dir.glob("assets/*.mp4"))
-        + list(proj_dir.glob("video/*.mp4"))
-    )
-    if local_mp4s:
-        best = max(local_mp4s, key=lambda p: p.stat().st_mtime)
-        try:
-            return base64.b64encode(best.read_bytes()).decode("ascii")
-        except Exception:
-            pass
-
-    home = Path.home()
-    for d in (home / "Downloads", home / "Desktop", home / "Videos"):
-        if not d.exists():
-            continue
-        try:
-            matches = [
-                p
-                for p in d.glob("*.mp4")
-                if any(k in p.name.lower() for k in ("video_1", "flama", "23.30.03", "whatsapp", "flame"))
-            ]
-            if matches:
-                best = max(matches, key=lambda p: p.stat().st_mtime)
-                return base64.b64encode(best.read_bytes()).decode("ascii")
-        except Exception:
-            continue
-
-    return ""
-
-
-# ---------------------------------------------------------------------------
-# Pure Physics Helpers + Flammy Hooks
-# ---------------------------------------------------------------------------
-def normalize_risk(risk_level: str) -> str:
-    try:
-        return _RISK_ALIASES[str(risk_level).strip().lower()]
-    except KeyError:
-        raise ValueError(f"risk_level must be Low, Medium or High (got: {risk_level!r})") from None
-
-
-def flammability_limit(material: Material, gravity_g: float) -> float:
-    factor = max(0.0, min(1.0, (0.98 - gravity_g) / 0.30)) if gravity_g < 0.98 else 0.0
-    return material.loi_pct - LOW_G_PENALTY_PCT * factor
-
-
-def n2_mass_kg(n2_kpa: float, volume_m3: float, temp_k: float = 295.0) -> float:
-    return max(n2_kpa, 0.0) * 1000 * volume_m3 * N2_MOLAR_KG / (R_GAS * temp_k)
-
-
-def find_sweet_spot(
-    material: Material,
-    gravity_g: float,
-    safety_margin: float = SAFETY_MARGIN_PCT,
-) -> SweetSpot | None:
-    x_fire = flammability_limit(material, gravity_g) - safety_margin
-    x_max = 100 * PPO2_TARGET_KPA / CABIN_P_MIN_KPA
-    x_min = math.floor(100 * PPO2_TARGET_KPA / CABIN_P_MAX_KPA * 2) / 2
-    x = math.floor(min(x_fire, x_max) * 2) / 2
-    if x < x_min:
-        return None
-    p = min(PPO2_TARGET_KPA / (x / 100), CABIN_P_MAX_KPA)
-    return SweetSpot(o2_pct=x, pressure_kpa=p, n2_kpa=p - PPO2_TARGET_KPA)
-
-
-def _fmt(x: float, d: int = 1) -> str:
-    return f"{x:.{d}f}"
-
-
-def _severity(margin: float, safety_margin: float) -> float:
-    if margin <= 0:
-        return min(1.0, 0.62 + 0.38 * min(-margin, 8.0) / 8.0)
-    if margin < safety_margin:
-        return 0.30 + 0.30 * (1.0 - margin / safety_margin)
-    return max(0.08, 0.30 - 0.22 * min(margin - safety_margin, 12.0) / 12.0)
-
-
-@_watch_sim_deco
-def assess_o2(
-    material_name: str,
-    o2_pct: float,
-    pressure_kpa: float,
-    gravity_g: float = 0.0,
-    volume_m3: float = 100.0,
-    safety_margin: float = SAFETY_MARGIN_PCT,
-) -> O2Assessment:
-    del volume_m3
-
-    if material_name not in MATERIALS:
-        material_name = list(MATERIALS.keys())[0]
-
-    material = MATERIALS[material_name]
-    limit = flammability_limit(material, gravity_g)
-    margin = limit - o2_pct
-    ppo2 = pressure_kpa * o2_pct / 100
-    sweet = find_sweet_spot(material, gravity_g, safety_margin)
-
-    if margin <= 0:
-        risk, label = "High", "CRITICAL FIRE HAZARD"
-    elif margin < safety_margin:
-        risk, label = "Medium", "CAUTION BUFFER"
-    else:
-        risk, label = "Low", "NOMINAL ENVELOPE"
-
-    physiology = "hypoxia" if ppo2 < PPO2_MIN_KPA else "hyperoxia" if ppo2 > PPO2_MAX_KPA else "ok"
-    headline = f"{_fmt(o2_pct)}% O₂ · {material.name} — {label}"
-
-    parts: list[str] = []
-    if sweet is None:
-        parts.append(
-            f"**Unsafe material in breathable air:** {material.name} ignites above **{_fmt(limit)}% O₂**, "
-            f"so it remains flammable even in normal Earth air (21% O₂). Replace this material or shield it behind a fire barrier."
-        )
-    else:
-        if o2_pct > sweet.o2_pct + 0.25:
-            parts.append(
-                f"**Recommended oxygen level: {_fmt(sweet.o2_pct)}% O₂.** Lowering oxygen from {_fmt(o2_pct)}% down to "
-                f"**{_fmt(sweet.o2_pct)}% O₂** stops {material.name} from sustaining a fire while keeping the cabin air completely breathable."
-            )
-        elif o2_pct < sweet.o2_pct - 0.25:
-            parts.append(
-                f"**Safe to increase oxygen up to {_fmt(sweet.o2_pct)}% O₂.** {material.name} has extra safety margin here, "
-                f"allowing higher oxygen concentration and lower cabin pressure to speed up spacewalk preparation."
-            )
-        else:
-            parts.append(
-                f"**Ideal oxygen level ({_fmt(sweet.o2_pct)}% O₂).** This setting provides the best balance between "
-                f"fire prevention for {material.name} and comfortable crew breathing."
-            )
-
-    if physiology == "hypoxia":
-        parts.append("**Low oxygen warning (Hypoxia):** Not enough breathable oxygen for the crew. Increase O₂ percentage or cabin pressure.")
-    elif physiology == "hyperoxia":
-        parts.append("**High oxygen warning (Hyperoxia):** Too much breathable oxygen for long missions. Lower cabin pressure or O₂ percentage.")
-
-    return O2Assessment(
-        material=material.name,
-        gravity_g=gravity_g,
-        o2_pct=o2_pct,
-        pressure_kpa=pressure_kpa,
-        ppo2_kpa=ppo2,
-        limit_pct=limit,
-        margin_pct=margin,
-        risk_level=risk,
-        severity=_severity(margin, safety_margin),
-        physiology=physiology,
-        sweet_spot=sweet,
-        headline=headline,
-        advice="\n\n".join(parts),
-    )
-
-
-@_watch_chat_deco
-def ask_flama_chatbot(question: str) -> str:
-    """Chatbot query handler hooked with @agent.watch_chat."""
-    env = st.session_state.get("env_snapshot") or {}
-    mat = env.get("material", list(MATERIALS.keys())[0])
-    o2 = env.get("o2_pct", 34.0)
-    g = env.get("gravity_g", 0.16)
-    p = env.get("pressure_kpa", 56.5)
-    return (
-        f"Evaluating '{question}' under {mat} at {o2:.1f}% O2, {p:.1f} kPa, {g:.2f}g. "
-        "Isolate power, cut HVAC ventilation flow to 0 cm/s, and apply module suppression protocol."
-    )
-
-
-def open_experiment(experiment_id: str, **overrides: Any):
-    """Hook where the user opens a named NASA experiment ('fm2', 'luci', 'sofie', 'flare', 'saffire', 'cir')."""
-    if agent is None:
-        return None
-    return agent.observe_experiment(experiment_id, **overrides)
-
-
-def _inject_css() -> None:
-    p = PALETTE
-    st.markdown(
-        f"""<style>
-        .asi-banner {{
-            font-family: 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif !important;
-            font-size: 13.5px;
-            font-weight: 600;
-            border-left: 4px solid;
-            border-radius: 6px;
-            padding: 11px 16px;
-            margin: 10px 0;
-        }}
-        .asi-low    {{ color: {p['glow_100']};  border-color: {p['sky_400']};   background: rgba(18, 48, 110, 0.35); }}
-        .asi-medium {{ color: {p['flare_200']}; border-color: {p['flare_400']}; background: rgba(140, 42, 8, 0.30); }}
-        .asi-high   {{ color: {p['paper_50']};  border-color: {p['flare_500']}; background: rgba(140, 42, 8, 0.50); }}
-        </style>""",
-        unsafe_allow_html=True,
-    )
-
-
-def read_environment(key: str = "env") -> dict | None:
-    if f"{key}_snapshot" not in st.session_state:
-        first_mat = list(MATERIALS.keys())[0]
-        a = assess_o2(first_mat, 34.0, 56.5, 0.16, 100.0, SAFETY_MARGIN_PCT)
-        st.session_state[f"{key}_snapshot"] = {
-            "material": a.material,
-            "gravity_g": a.gravity_g,
-            "o2_pct": a.o2_pct,
-            "pressure_kpa": a.pressure_kpa,
-            "ppo2_kpa": a.ppo2_kpa,
-            "limit_pct": a.limit_pct,
-            "margin_pct": a.margin_pct,
-            "risk_level": a.risk_level,
-            "severity": a.severity,
-        }
-    return st.session_state.get(f"{key}_snapshot")
-
-
-# ---------------------------------------------------------------------------
-# Sackboy SVG Helper
-# ---------------------------------------------------------------------------
-_FLAME_PATH = "M0,0 C-22,-12 -15,-46 0,-74 C15,-46 22,-12 0,0Z"
-
-
-def _sackboy_figure(group_id: str, x: float, y: float, pose: str = "stand", gravity_g: float = 0.0) -> str:
-    body_fill = "#3A2216"
-    body_stroke = "#8C6D53"
-    float_factor = max(0.0, min(1.0, (0.35 - gravity_g) / 0.35))
-    anim_cls = "sb-float" if gravity_g <= 0.05 else "sb-breathe"
-    tilt = -7.0 * float_factor if pose != "retreat" else (-10.0 - 4.0 * float_factor)
-
-    if pose == "operate":
-        limbs = (
-            f'<path d="M-12,4 Q-22,18 -16,31" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-12,4 Q-22,18 -16,31" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q24,14 33,18" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q24,14 33,18" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-8,36 L-13,66" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M-8,36 L-13,66" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-            f'<path d="M8,36 L12,66" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M8,36 L12,66" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-            f'<rect x="29" y="12" width="11" height="24" rx="3" fill="#2F63B0" stroke="#F4F3EF" stroke-width="1.4"/>'
-            f'<path d="M40,16 L52,12" stroke="#F4F3EF" stroke-width="2.6" stroke-linecap="round"/>'
-            f'<polygon points="52,12 165,-14 165,22" fill="url(#mistGrad)" opacity="0.55"/>'
-        )
-    elif pose == "retreat":
-        limbs = (
-            f'<path d="M-12,4 Q-26,-4 -22,-16" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-12,4 Q-26,-4 -22,-16" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q26,12 22,26" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q26,12 22,26" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-8,36 L-20,64" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M-8,36 L-20,64" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-            f'<path d="M8,36 L20,62" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M8,36 L20,62" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-        )
-    else:
-        limbs = (
-            f'<path d="M-12,4 Q-21,18 -17,32" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-12,4 Q-21,18 -17,32" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q21,18 17,32" stroke="{body_stroke}" stroke-width="11" stroke-linecap="round" fill="none"/>'
-            f'<path d="M12,4 Q21,18 17,32" stroke="{body_fill}" stroke-width="8.5" stroke-linecap="round" fill="none"/>'
-            f'<path d="M-8,36 L-10,66" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M-8,36 L-10,66" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-            f'<path d="M8,36 L10,66" stroke="{body_stroke}" stroke-width="12" stroke-linecap="round"/>'
-            f'<path d="M8,36 L10,66" stroke="{body_fill}" stroke-width="9.5" stroke-linecap="round"/>'
-        )
-
-    zipper_teeth = "".join(
-        f'<line x1="-3" y1="{y_t}" x2="3" y2="{y_t}" stroke="#9E958B" stroke-width="1.5"/>'
-        for y_t in range(4, 36, 4)
-    )
-    zipper = (
-        f'<line x1="0" y1="0" x2="0" y2="36" stroke="#18120E" stroke-width="3.2"/>'
-        f'{zipper_teeth}'
-        f'<rect x="-3.2" y="4" width="6.4" height="5" rx="1.2" fill="#C4BCB3" stroke="#18120E" stroke-width="0.8"/>'
-        f'<polygon points="-2.5,9 2.5,9 4.2,21 -4.2,21" fill="#B5ABA0" stroke="#18120E" stroke-width="0.9"/>'
-        f'<rect x="-1.6" y="13" width="3.2" height="5" rx="0.8" fill="#22140D"/>'
-    )
-
-    eyes = (
-        f'<circle cx="-9" cy="-22" r="4.8" fill="#0B0908" stroke="#24160E" stroke-width="1"/>'
-        f'<circle cx="-10.5" cy="-23.6" r="1.5" fill="#F4F3EF" opacity="0.9"/>'
-        f'<circle cx="9" cy="-22" r="4.8" fill="#0B0908" stroke="#24160E" stroke-width="1"/>'
-        f'<circle cx="7.5" cy="-23.6" r="1.5" fill="#F4F3EF" opacity="0.9"/>'
-    )
-
-    return (
-        f'<g id="{group_id}" transform="translate({x} {y:.1f}) rotate({tilt:.1f})"><g class="{anim_cls}">'
-        f'{limbs}'
-        f'<rect x="-14" y="-2" width="28" height="40" rx="10" fill="{body_fill}" stroke="{body_stroke}" stroke-width="2.2"/>'
-        f'{zipper}'
-        f'<rect x="-22" y="-42" width="44" height="37" rx="14" fill="{body_fill}" stroke="{body_stroke}" stroke-width="2.2"/>'
-        f'{eyes}'
-        f'</g></g>'
-    )
-
-
-# ---------------------------------------------------------------------------
-# Unified HTML Engine (Animations + Real DB UI + Flammy SSE Bridge)
-# ---------------------------------------------------------------------------
 def render_live_mission_control() -> None:
-    read_environment()
     import flama_type
 
     FLAMA_FONT_FACES = flama_type.font_face_css()
@@ -729,158 +223,8 @@ def render_live_mission_control() -> None:
         logging.getLogger("flama").exception("3D simulator could not be built")
         SIM3D_HTML = ('<div class="empty-module-box"><div class="empty-module-code">'
                       "3D SIMULATOR UNAVAILABLE — SEE SERVER LOG</div></div>")
-    video_b64 = _load_cover_video_b64()
 
-    materials_dict = {name: mat.loi_pct for name, mat in MATERIALS.items()}
-    presets_dict = {k: v for k, v in MISSION_PRESETS.items() if v is not None}
 
-    # LAYER 1 (BACKGROUND): Space-900 (#07080A) & Sky-950 (#0A1838) Cabin Viewport
-    iss_background_layer = """
-      <defs>
-        <radialGradient id="blue0gGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#E8F1FA" stop-opacity="0.95"/>
-          <stop offset="38%" stop-color="#6FA3D8" stop-opacity="0.80"/>
-          <stop offset="72%" stop-color="#2F63B0" stop-opacity="0.45"/>
-          <stop offset="100%" stop-color="#0A1838" stop-opacity="0.0"/>
-        </radialGradient>
-        <radialGradient id="suppressCloudGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#E8F1FA" stop-opacity="0.92"/>
-          <stop offset="45%" stop-color="#BCD6EE" stop-opacity="0.65"/>
-          <stop offset="80%" stop-color="#6FA3D8" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#12306E" stop-opacity="0.0"/>
-        </radialGradient>
-        <linearGradient id="mistGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-          <stop offset="0%" stop-color="#E8F1FA" stop-opacity="0.65"/>
-          <stop offset="100%" stop-color="#6FA3D8" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-
-      <rect width="560" height="320" rx="8" fill="#07080A"/>
-      <line x1="110" y1="64" x2="110" y2="256" stroke="#1A1D23" stroke-width="1.5"/>
-      <line x1="275" y1="64" x2="275" y2="256" stroke="#1A1D23" stroke-width="1.5"/>
-      <line x1="495" y1="64" x2="495" y2="256" stroke="#1A1D23" stroke-width="1.5"/>
-      <line x1="36" y1="152" x2="255" y2="152" stroke="#1A1D23" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="46" cy="152" r="3.5" fill="#2F63B0"/>
-      <circle cx="245" cy="152" r="3.5" fill="#2F63B0"/>
-
-      <g transform="translate(64 104)">
-        <circle r="29" fill="#07080A" stroke="#1A1D23" stroke-width="3"/>
-        <path d="M-25,12 Q0,-4 25,12" fill="none" stroke="#6FA3D8" stroke-width="2" opacity="0.85"/>
-        <path d="M-23,14 Q0,-1 23,14" fill="none" stroke="#FF8A2A" stroke-width="1.2" opacity="0.75"/>
-        <path d="M-23,15 Q0,0 23,15 L19,23 L-19,23 Z" fill="#0A1838" opacity="0.9"/>
-        <circle cx="-10" cy="-10" r="1.2" fill="#F4F3EF" opacity="0.9"/>
-        <circle cx="12" cy="-6" r="1" fill="#F4F3EF" opacity="0.8"/>
-        <circle cx="4" cy="-16" r="1.3" fill="#BCD6EE" opacity="0.9"/>
-      </g>
-      <text x="64" y="146" text-anchor="middle" font-size="9" font-weight="600" fill="#3A3F48" letter-spacing="1.0">ORBITAL LIMB</text>
-
-      <line x1="16" y1="256" x2="544" y2="256" stroke="#1A1D23" stroke-width="2"/>
-
-      <g transform="translate(342 98)">
-        <rect x="0" y="0" width="126" height="158" rx="6" fill="#101216" stroke="#1A1D23" stroke-width="2"/>
-        <rect x="8" y="8" width="110" height="18" rx="3" fill="#07080A" stroke="#1A1D23" stroke-width="1"/>
-        <text x="63" y="20" text-anchor="middle" font-size="9.5" font-weight="600" fill="#D9D8D3" letter-spacing="1.0">CIR · RACK 04</text>
-        <rect id="asi-chamber-frame" x="14" y="32" width="98" height="74" rx="4" fill="#07080A" stroke="#1A1D23" stroke-width="1.8"/>
-        <rect x="55" y="32" width="16" height="6" rx="1" fill="#2F63B0"/>
-        <line x1="63" y1="90" x2="63" y2="106" stroke="#3A3F48" stroke-width="3"/>
-        <rect x="47" y="86" width="32" height="5" rx="1" fill="#D9D8D3"/>
-        <line x1="18" y1="120" x2="108" y2="120" stroke="#1A1D23" stroke-width="2"/>
-        <line x1="18" y1="130" x2="108" y2="130" stroke="#1A1D23" stroke-width="2"/>
-        <line x1="18" y1="140" x2="108" y2="140" stroke="#1A1D23" stroke-width="2"/>
-        <circle cx="24" cy="149" r="3" fill="#6FA3D8"/>
-        <circle cx="34" cy="149" r="3" fill="#2F63B0"/>
-        <text x="108" y="152" text-anchor="end" font-size="9" font-weight="600" fill="#3A3F48">ECLSS BUS</text>
-      </g>
-    """
-
-    # LAYER 2 (MIDDLE): Crew, Flame Scenes & Automated Suppression Cloud
-    scene_low = (
-        f'<g id="asi-scene-low" style="opacity:0;transition:opacity 0.25s ease;">'
-        f'<circle cx="405" cy="164" r="16" fill="none" stroke="#6FA3D8" stroke-width="2.5"/>'
-        f'<path d="M398,164 l5,5 l10,-11" fill="none" stroke="#6FA3D8" stroke-width="3" stroke-linecap="round"/>'
-        f'{_sackboy_figure("asi-sb-low", 178, 184.0, "stand", 0.16)}'
-        f'</g>'
-    )
-
-    scene_med = (
-        f'<g id="asi-scene-med" style="opacity:0;transition:opacity 0.25s ease;">'
-        f'<g transform="translate(405 168)">'
-        f'<g id="asi-med-0g" style="opacity:0.4;">'
-        f'<circle r="28" fill="url(#blue0gGlow)" class="pulse-c"/>'
-        f'<circle r="14" fill="#6FA3D8" opacity="0.75" class="pulse-c"/>'
-        f'<circle r="6" fill="#E8F1FA"/>'
-        f'</g>'
-        f'<g id="asi-med-1g" style="opacity:0.6;">'
-        f'<ellipse id="asi-med-ellipse" rx="24" ry="30" fill="rgba(255,194,122,0.18)" stroke="#FFC27A" stroke-width="2" class="pulse-c"/>'
-        f'<ellipse rx="13" ry="17" fill="rgba(255,138,42,0.72)" class="pulse-c"/>'
-        f'<circle r="5" fill="#F4F3EF"/>'
-        f'</g>'
-        f'</g>'
-        f'{_sackboy_figure("asi-sb-med", 178, 184.0, "operate", 0.16)}'
-        f'</g>'
-    )
-
-    fire_0g = (
-        '<g id="asi-fire-0g" style="opacity:0.3;transition:opacity 0.08s linear;">'
-        '<circle cx="0" cy="-32" r="44" fill="url(#blue0gGlow)" class="pulse-c"/>'
-        '<circle cx="-11" cy="-27" r="22" fill="#6FA3D8" opacity="0.80" class="pulse-c"/>'
-        '<circle cx="11" cy="-36" r="20" fill="#BCD6EE" opacity="0.85" class="pulse-c"/>'
-        '<circle cx="0" cy="-32" r="12" fill="#E8F1FA" opacity="0.96"/>'
-        '<circle cx="-22" cy="-70" r="5.5" fill="#3A3F48" opacity="0.50" class="smoke-0g"/>'
-        '<circle cx="8" cy="-78" r="7" fill="#3A3F48" opacity="0.45" class="smoke-0g"/>'
-        '<circle cx="24" cy="-86" r="6" fill="#3A3F48" opacity="0.50" class="smoke-0g"/>'
-        '</g>'
-    )
-    fire_1g = (
-        f'<g id="asi-fire-1g" style="opacity:0.7;transition:opacity 0.08s linear;">'
-        f'<g transform="translate(-26 0) scale(1.32)"><path d="{_FLAME_PATH}" fill="#F2600F" opacity="0.88" class="pulse"/></g>'
-        f'<g transform="translate(2 0) scale(1.72)"><path d="{_FLAME_PATH}" fill="#F2600F" opacity="0.96" class="pulse"/></g>'
-        f'<g transform="translate(28 0) scale(1.26)"><path d="{_FLAME_PATH}" fill="#FF8A2A" opacity="0.88" class="pulse"/></g>'
-        f'<g transform="translate(2 0) scale(1.10)"><path d="{_FLAME_PATH}" fill="#FFC27A" opacity="0.92" class="pulse"/></g>'
-        f'<g transform="translate(2 0) scale(0.65)"><path d="{_FLAME_PATH}" fill="#F4F3EF" opacity="0.95"/></g>'
-        f'<circle cx="0" cy="-86" r="6.5" fill="#3A3F48" opacity="0.50" class="smoke-1g"/>'
-        f'<circle cx="12" cy="-100" r="8" fill="#3A3F48" opacity="0.45" class="smoke-1g"/>'
-        f'</g>'
-    )
-
-    scene_high = (
-        f'<g id="asi-scene-high" style="opacity:1;transition:opacity 0.25s ease;">'
-        f'<g id="asi-flame-scaler" transform="translate(405 202) scale(1.08)" style="transition:transform 0.35s ease;">{fire_0g}{fire_1g}</g>'
-        f'{_sackboy_figure("asi-sb-high", 152, 184.0, "retreat", 0.16)}'
-        f'</g>'
-    )
-
-    suppression_cloud = (
-        '<g id="asi-suppress-cloud" style="opacity:0;transition:opacity 0.35s ease;">'
-        '<polygon points="405,134 362,200 448,200" fill="url(#mistGrad)" transform="rotate(90 405 167)" opacity="0.85"/>'
-        '<circle cx="405" cy="170" r="42" fill="url(#suppressCloudGrad)" class="pulse-c"/>'
-        '<circle cx="388" cy="162" r="24" fill="#E8F1FA" opacity="0.55" class="pulse-c"/>'
-        '<circle cx="422" cy="174" r="26" fill="#6FA3D8" opacity="0.45" class="pulse-c"/>'
-        '</g>'
-    )
-
-    # LAYER 3 (FOREGROUND HUD)
-    iss_foreground_hud = """
-      <rect x="16" y="42" width="528" height="22" rx="4" fill="#101216" stroke="#1A1D23" stroke-width="1.5"/>
-      <text id="asi-duct-txt" x="28" y="57" font-size="10" font-weight="600" fill="#D9D8D3" letter-spacing="0.8">CABIN VENTILATION DUCT · FORCED AIRFLOW</text>
-
-      <g transform="translate(324 44)">
-        <rect id="asi-smoke-box" width="216" height="18" rx="3" fill="#07080A" stroke="#1A1D23" stroke-width="1.2"/>
-        <circle id="asi-smoke-led" cx="12" cy="9" r="4" fill="#6FA3D8"/>
-        <text id="asi-smoke-txt" x="23" y="13" font-size="9.5" font-weight="600" fill="#F4F3EF" letter-spacing="0.6">SAME SENSOR: STANDBY</text>
-      </g>
-
-      <rect id="asi-svg-badge-rect" x="16" y="10" width="160" height="24" rx="4" fill="#8C2A08" stroke="#F2600F" stroke-width="1.2"/>
-      <text id="asi-svg-badge-text" x="96" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="#F4F3EF" letter-spacing="1.2">RISK · CRITICAL</text>
-
-      <rect x="354" y="10" width="190" height="24" rx="4" fill="#101216" stroke="#1A1D23"/>
-      <text id="asi-svg-grav-text" x="449" y="26" text-anchor="middle" font-size="10.5" font-weight="600" fill="#BCD6EE" letter-spacing="0.9">0.16G BUOYANT PLUME</text>
-
-      <rect x="16" y="274" width="528" height="32" rx="4" fill="#101216" stroke="#1A1D23" stroke-width="1"/>
-      <text id="asi-svg-caption" x="280" y="294" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="1.0" fill="#F4F3EF">CRITICAL — O₂ ABOVE FLAMMABILITY LIMIT, RAPID FLAME SPREAD</text>
-    """
-
-    # Top-Left FLAMA Bluish Microgravity Flame Sphere Logo (Reflects Flammy `signal`: blue/amber/red)
     flama_top_left_logo_svg = """
       <svg class="flama-logo-sphere" viewBox="0 0 48 48" aria-hidden="true">
         <defs>
@@ -903,15 +247,8 @@ def render_live_mission_control() -> None:
       </svg>
     """
 
-    preset_options_html = '<option value="Custom Configuration">Custom Configuration</option>' + "".join(
-        f'<option value="{html.escape(k)}">{html.escape(k)}</option>' for k in presets_dict
-    )
-    material_options_html = "".join(
-        f'<option value="{html.escape(k)}" {"selected" if idx == 0 else ""}>{html.escape(k)}</option>'
-        for idx, k in enumerate(materials_dict)
-    )
-
-    video_data_uri = f"data:video/mp4;base64,{video_b64}" if video_b64 else ""
+    # served as a static file: cached by the browser (it used to be base64 twice inside the page: 4.4 MB)
+    video_data_uri = "app/static/flama_cover.mp4" if (Path(__file__).resolve().parent / "static" / "flama_cover.mp4").exists() else ""
 
     html_doc = f"""<!DOCTYPE html>
 <html>
@@ -2577,11 +1914,6 @@ def render_live_mission_control() -> None:
 {FLAMMY_ENGINE_JS}
 <script>
 (function() {{
-  const MATERIALS = {json.dumps(materials_dict)};
-  const PRESETS = {json.dumps(presets_dict)};
-  const COLORS = {json.dumps(RISK_COLOR)};
-  const PAL = {json.dumps(PALETTE)};
-  const SAFETY_MARGIN = {SAFETY_MARGIN_PCT};
 
   const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -3289,7 +2621,11 @@ def render_live_mission_control() -> None:
     document.documentElement.style.setProperty("--app-vh", h + "px");
   }}
   setAppVh();
-  try {{ window.parent.addEventListener("resize", setAppVh); }} catch (e) {{}}
+  try {{
+    window.parent.addEventListener("resize", setAppVh);
+    // Streamlit replaces this iframe on reload: drop the listener so the parent keeps no dead callbacks
+    window.addEventListener("pagehide", () => {{ try {{ window.parent.removeEventListener("resize", setAppVh); }} catch (e) {{}} }});
+  }} catch (e) {{}}
   function syncIframeHeight() {{
     if (window.frameElement) {{
       const h = document.body.scrollHeight;
@@ -3497,8 +2833,14 @@ def render_live_mission_control() -> None:
     document.addEventListener("keydown", (e) => {{ if (e.key === "Escape") hide(); }});
 
     const sc = parentScroller();
-    if (sc) sc.addEventListener("scroll", schedule, {{ passive: true }});
-    try {{ window.parent.addEventListener("resize", schedule, {{ passive: true }}); }} catch (e) {{}}
+    if (sc) {{
+      sc.addEventListener("scroll", schedule, {{ passive: true }});
+      window.addEventListener("pagehide", () => {{ try {{ sc.removeEventListener("scroll", schedule); }} catch (e) {{}} }});
+    }}
+    try {{
+      window.parent.addEventListener("resize", schedule, {{ passive: true }});
+      window.addEventListener("pagehide", () => {{ try {{ window.parent.removeEventListener("resize", schedule); }} catch (e) {{}} }});
+    }} catch (e) {{}}
     window.addEventListener("resize", schedule, {{ passive: true }});
     if (window.ResizeObserver) new ResizeObserver(schedule).observe(document.body);
 
@@ -3513,47 +2855,3 @@ def render_live_mission_control() -> None:
 </body>
 </html>"""
     components.html(html_doc, height=820, scrolling=False)
-
-
-# ---------------------------------------------------------------------------
-# Legacy wrappers
-# ---------------------------------------------------------------------------
-def render_o2_optimizer(
-    material: str | None = None,
-    gravity_g: float | None = None,
-    *,
-    default_o2: float = 34.0,
-    key: str = "env",
-    show_header: bool = True,
-) -> O2Assessment:
-    del show_header
-
-    if material not in MATERIALS:
-        material = list(MATERIALS.keys())[0]
-
-    g = 0.16 if gravity_g is None else gravity_g
-    a = assess_o2(material, default_o2, 56.5, g)
-    st.session_state[f"{key}_snapshot"] = {
-        "material": a.material,
-        "gravity_g": a.gravity_g,
-        "o2_pct": a.o2_pct,
-        "pressure_kpa": a.pressure_kpa,
-        "ppo2_kpa": a.ppo2_kpa,
-        "limit_pct": a.limit_pct,
-        "margin_pct": a.margin_pct,
-        "risk_level": a.risk_level,
-        "severity": a.severity,
-    }
-    return a
-
-
-def render_stickman_animation(
-    risk_level: str,
-    caption: str | None = None,
-    *,
-    severity: float | None = None,
-    gravity_g: float = 0.0,
-    height: int = 310,
-) -> str:
-    del caption, severity, gravity_g, height
-    return risk_level

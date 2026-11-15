@@ -208,10 +208,37 @@ def modo() -> dict:
 import threading as _threading  # noqa: E402
 import uuid as _uuid  # noqa: E402
 
-from fastapi import Body as _Body, HTTPException as _HTTPException  # noqa: E402
+from fastapi import Body as _Body, Request as _Request  # noqa: E402
 
 _JOBS: dict = {}
 _JOBS_LOCK = _threading.Lock()
+
+# Each synthesis spends many Gemini calls of the shared quota: limit per visitor and per day.
+import time as _time  # noqa: E402
+
+_LIM_IP_HORA = int(os.getenv("TEORIAS_POR_IP_HORA", "3"))
+_LIM_DIA = int(os.getenv("TEORIAS_POR_DIA", "20"))
+_USO: dict = {}          # ip -> [timestamps]
+_USO_DIA: list = []      # timestamps (all visitors)
+
+
+def _ip(req) -> str:
+    fwd = req.headers.get("x-forwarded-for", "")   # Render / proxies
+    return (fwd.split(",")[0].strip() if fwd else "") or (req.client.host if req.client else "?")
+
+
+def _cupo(ip: str) -> str | None:
+    """None if this visitor may start a synthesis now; otherwise the reason (and records the use when allowed)."""
+    ahora = _time.time()
+    _USO_DIA[:] = [t for t in _USO_DIA if ahora - t < 86400]
+    mias = [t for t in _USO.get(ip, []) if ahora - t < 3600]
+    if len(_USO_DIA) >= _LIM_DIA:
+        return "Daily limit of AI syntheses reached; the stored theories are still available."
+    if len(mias) >= _LIM_IP_HORA:
+        return f"Limit of {_LIM_IP_HORA} AI syntheses per hour reached; try again later."
+    _USO[ip] = mias + [ahora]
+    _USO_DIA.append(ahora)
+    return None
 
 
 def _job(job_id: str, tema: str) -> None:
@@ -228,7 +255,7 @@ def _job(job_id: str, tema: str) -> None:
 
 
 @app.post("/ia/teorias")
-def crear_teorias(cuerpo: dict = _Body(...)) -> dict:
+def crear_teorias(req: _Request, cuerpo: dict = _Body(...)) -> dict:
     tema = " ".join(str(cuerpo.get("tema") or "").split())[:80]
     if len(tema) < 2:
         raise _HTTPException(400, "tema vacío")
@@ -236,6 +263,9 @@ def crear_teorias(cuerpo: dict = _Body(...)) -> dict:
         activos = [j for j in _JOBS.values() if j["estado"] == "en_curso"]
         if len(activos) >= 2:
             raise _HTTPException(429, "Ya hay dos síntesis en curso; espera a que terminen.")
+        motivo = _cupo(_ip(req))
+        if motivo:
+            raise _HTTPException(429, motivo)
         job_id = _uuid.uuid4().hex[:12]
         _JOBS[job_id] = {"estado": "en_curso", "tema": tema}
     _threading.Thread(target=_job, args=(job_id, tema), daemon=True).start()
