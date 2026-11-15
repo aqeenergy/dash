@@ -4,8 +4,11 @@
   "use strict";
   const CFG = window.FLAMA_IA || { puerto: 8001 };
   const host = (() => { try { return window.parent.location.hostname || "localhost"; } catch (e) { return location.hostname || "localhost"; } })();
-  const BASE_HTTP = `http://${host}:${CFG.puerto}`;
-  const URL_WS = `ws://${host}:${CFG.puerto}/ws/voz`;
+  // FLAMA_IA_URL (a deployed AI server) wins; otherwise the local server on this machine.
+  const LOCAL = /^(localhost|127\.|\[::1\]|$)/.test(host);
+  const BASE_HTTP = CFG.base ? String(CFG.base).replace(/\/+$/, "") : `http://${host}:${CFG.puerto}`;
+  const URL_WS = BASE_HTTP.replace(/^http/, "ws") + "/ws/voz";
+  const DEPLOYED = !!CFG.base || LOCAL;
   const $ = (id) => document.getElementById(id);
   const lista = $("ia-mensajes");
   const ESTADOS = { desconectada: "AI not connected", conectando: "Connecting to the AI…", conectada: "AI connected", escuchando: "Listening…", pausa: "AI paused · resumes when you speak or type", error: "AI disconnected" };
@@ -95,6 +98,10 @@
   // ---------------------------------------------------------------- conexión
   function conectar() {
     if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+    if (!DEPLOYED) {
+      mostrarError("The AI voice server is not connected to this public site yet. Flammy, the 3D simulator, the PSI library and Theory Lab still work.");
+      return;
+    }
     listo = false; estado("conectando");
     $("ia-reconectar").hidden = true;
     ws = new WebSocket(URL_WS);
@@ -106,7 +113,9 @@
       if ($("ia-estado").dataset.estado !== "error") estado("desconectada");
     };
     ws.onerror = () => {
-      mostrarError(`Cannot reach the AI at ${URL_WS}. Start the server: <code>voz\\.venv\\Scripts\\python -m uvicorn ia_web.servidor_web:app --port ${CFG.puerto}</code>`, true);
+      mostrarError(LOCAL
+        ? `Cannot reach the AI at ${URL_WS}. Start the server: <code>voz\\.venv\\Scripts\\python -m uvicorn ia_web.servidor_web:app --port ${CFG.puerto}</code>`
+        : `Cannot reach the AI server at ${esc(BASE_HTTP)}. It may be waking up: press Reconnect in a minute.`, true);
     };
   }
   function enviar(obj) {
@@ -268,6 +277,7 @@
   });
 
   // Estado inicial sin abrir sesión (abrir el WebSocket ya inicia una sesión de Gemini)
+  if (!DEPLOYED) estado("desconectada", "AI voice server not deployed on this site"); else
   fetch(`${BASE_HTTP}/ia/modo`).then((r) => r.json()).then((m) => {
     modoSimulado = !!m.simulado; $("ia-modo").hidden = !modoSimulado;
     estado("desconectada", modoSimulado ? "AI ready (simulated) · type a scenario" : "AI ready · type or press the mic");

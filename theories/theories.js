@@ -7,7 +7,9 @@
   if (!root) return;
   const CFG = window.FLAMA_IA || { puerto: 8001 };
   const host = (() => { try { return window.parent.location.hostname || "localhost"; } catch (e) { return "localhost"; } })();
-  const API = `http://${host}:${CFG.puerto}/ia/teorias`;
+  const LOCAL = /^(localhost|127\.|\[::1\]|$)/.test(host);
+  const API = (CFG.base ? String(CFG.base).replace(/\/+$/, "") : `http://${host}:${CFG.puerto}`) + "/ia/teorias";
+  const DEPLOYED = !!CFG.base || LOCAL;
   const list = $("tl-list"), status = $("tl-status"), hl = $("tl-highlights"), q = $("tl-q");
   let base = null, shown = [], openId = null, topicData = null;
   const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -85,6 +87,10 @@
 
   // ------------------------------------------------------------------ AI topic run
   async function askAI(tema) {
+    if (!DEPLOYED) {
+      setStatus(`New AI syntheses need the AI server, which is not connected to this public site. Showing theories from the last full synthesis that match “${esc(tema)}”.`, true);
+      applyFilter(); return;
+    }
     const btn = $("tl-ask"); btn.disabled = true;
     setStatus(`The AI is cross-reading all ${base ? base.corpus.investigations : 133} investigations for <b>${esc(tema)}</b>. This takes a few minutes; you can keep browsing.`);
     try {

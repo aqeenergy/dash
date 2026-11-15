@@ -665,6 +665,14 @@ def render_live_mission_control() -> None:
     import flama_type
 
     FLAMA_FONT_FACES = flama_type.font_face_css()
+    from flammy_agent import knowledge as _fk
+
+    _flammy_k = json.dumps({"materials": _fk.MATERIALS, "rules": _fk.RULES, "fire_response": _fk.FIRE_RESPONSE,
+                            "class_notes": _fk.CLASS_NOTES, "sources": _fk.SOURCES, "experiments": _fk.EXPERIMENTS,
+                            "fallback": _fk.FALLBACK, "disclaimer": _fk.DISCLAIMER}, ensure_ascii=False).replace("</", "<" + "\\" + "/")
+    _engine_js = (Path(__file__).resolve().parent / "flammy_agent" / "flammy_engine.js").read_text(encoding="utf-8")
+    FLAMMY_ENGINE_JS = ("<script>window.FLAMMY_KNOWLEDGE = " + _flammy_k + ";</script><script>"
+                        + _engine_js.replace("</", "<" + "\\" + "/") + "</script>")
     _web = Path(__file__).resolve().parent / "ia_web" / "web"
     IA_CHAT_HTML = (_web / "chat.html").read_text(encoding="utf-8")
     IA_CHAT_CSS = (_web / "chat.css").read_text(encoding="utf-8")
@@ -692,7 +700,12 @@ def render_live_mission_control() -> None:
     _lib = Path(__file__).resolve().parent / "library"
     LIB_CSS = (_lib / "library.css").read_text(encoding="utf-8")
     LIB_JS = "<script>" + (_lib / "library.js").read_text(encoding="utf-8").replace("</", "<" + "\\" + "/") + "</script>"
-    _cfg = json.dumps({"puerto": int(_os.getenv("FLAMA_IA_PUERTO", "8001")), "nombre": "Llama"})
+    _ia_url = _os.getenv("FLAMA_IA_URL", "")
+    try:  # Streamlit Community Cloud secrets
+        _ia_url = _ia_url or str(st.secrets.get("FLAMA_IA_URL", ""))
+    except Exception:
+        pass
+    _cfg = json.dumps({"puerto": int(_os.getenv("FLAMA_IA_PUERTO", "8001")), "nombre": "Llama", "base": _ia_url.strip()})
     _chat_js = (_web / "chat.js").read_text(encoding="utf-8").replace("</", "<" + "\\" + "/")
     IA_CHAT_JS = "<script>window.FLAMA_IA = " + _cfg + ";</script>" + "<script>" + _chat_js + "</script>"
     try:
@@ -2540,6 +2553,7 @@ def render_live_mission_control() -> None:
   </button>
 </div>
 
+{FLAMMY_ENGINE_JS}
 <script>
 (function() {{
   const MATERIALS = {json.dumps(materials_dict)};
@@ -2547,7 +2561,6 @@ def render_live_mission_control() -> None:
   const COLORS = {json.dumps(RISK_COLOR)};
   const PAL = {json.dumps(PALETTE)};
   const SAFETY_MARGIN = {SAFETY_MARGIN_PCT};
-  const FLAMMY_BASE = "http://127.0.0.1:{FLAMMY_PORT}/flammy";
 
   const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -2660,36 +2673,16 @@ def render_live_mission_control() -> None:
   }}
 
   window.flamaPostFlammy = (payload, options) => postFlammyEvent(payload, options || {{}});
+  // Flammy runs in the browser (flammy_engine.js): works on any host, no local port or mixed content.
   function postFlammyEvent(payload, options = {{}}) {{
-    fetch(FLAMMY_BASE + "/observe", {{
-      method: "POST",
-      headers: {{ "Content-Type": "application/json" }},
-      body: JSON.stringify(payload),
-    }})
-      .then((r) => (r.ok ? r.json() : null))
-      .then((a) => {{
-        if (a) applyFlammyAdvisoryToUI(a, options);
-      }})
-      .catch(() => {{}});
-  }}
-
-  try {{
-    fetch(FLAMMY_BASE + "/latest")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((a) => {{ if (a) applyFlammyAdvisoryToUI(a, {{ forceShow: true }}); }})
-      .catch(() => {{}});
-
-    if ("EventSource" in window) {{
-      const es = new EventSource(FLAMMY_BASE + "/stream");
-      es.addEventListener("advisory", (ev) => {{
-        try {{
-          const a = JSON.parse(ev.data);
-          applyFlammyAdvisoryToUI(a);
-        }} catch (err) {{}}
-      }});
-      es.onerror = () => {{ es.close(); }};
+    try {{
+      if (!window.FlammyEngine) return;
+      const a = window.FlammyEngine.observe(payload);
+      if (a) applyFlammyAdvisoryToUI(a, options);
+    }} catch (err) {{
+      console.warn("Flammy engine error", err);
     }}
-  }} catch (err) {{}}
+  }}
 
   // =========================================================================
   // 2. DISCREET LOW-OPACITY RIPPLE EFFECT FROM EXACT CLICK POINT
