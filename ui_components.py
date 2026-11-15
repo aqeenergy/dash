@@ -1546,8 +1546,8 @@ def render_live_mission_control() -> None:
 
 
     <div class="cover-video-viewport">
-      <video id="flama-vid-a" class="cover-vid-layer" style="opacity:1;" muted playsinline preload="auto" src="{video_data_uri}"></video>
-      <video id="flama-vid-b" class="cover-vid-layer" style="opacity:0;" muted playsinline preload="auto" src="{video_data_uri}"></video>
+      <video id="flama-vid-a" class="cover-vid-layer" style="opacity:1;" muted playsinline preload="auto" data-src="{video_data_uri}"></video>
+      <video id="flama-vid-b" class="cover-vid-layer" style="opacity:0;" muted playsinline preload="auto" data-src="{video_data_uri}"></video>
     </div>
 
     <button id="si-enter-console-btn" class="cover-init-btn press-able">INITIALIZE</button>
@@ -2259,7 +2259,6 @@ def render_live_mission_control() -> None:
   const vidB      = document.getElementById("flama-vid-b");
   const fileInput = document.getElementById("custom-video-input");
 
-  let activeLayer = "A";
   let crossfading = false;
   const TARGET_LOOP_START = 8.0;
   const CROSSFADE_SEC     = 0.50;
@@ -2269,58 +2268,80 @@ def render_live_mission_control() -> None:
     return dur > 8.35 ? TARGET_LOOP_START : Math.max(0.0, dur * 0.55);
   }}
 
-  function monitorDualVideoLoop() {{
-    const fg = activeLayer === "A" ? vidA : vidB;
-    const bg = activeLayer === "A" ? vidB : vidA;
+  // The background layer is parked at the loop start AHEAD of time; the crossfade only starts once that
+  // layer can really play (decoded frame ready). Both layers share ONE in-memory copy of the file, so the
+  // seeks are instant, like the old embedded video, but the page stays light and the browser caches it.
+  const PREPARE_SEC = 1.2;
+  const near = (v, t) => Math.abs(v.currentTime - t) < 0.06;
+  function parkAt(v, t) {{ if (!near(v, t) && !v.seeking) v.currentTime = t; }}
 
-    if (fg && fg.readyState >= 2 && fg.duration > 0) {{
+  function monitorDualVideoLoop() {{ checkLoop(); requestAnimationFrame(monitorDualVideoLoop); }}
+  setInterval(checkLoop, 100);   // animation frames are throttled when the window is not in front
+
+  function checkLoop() {{
+    // the visible layer is read from the screen itself, so no state variable can drift out of sync
+    const fg = vidB.style.opacity === "1" ? vidB : vidA;
+    const bg = fg === vidA ? vidB : vidA;
+
+    if (fg && bg && fg.readyState >= 2 && fg.duration > 0) {{
       const dur = fg.duration;
       const loopStart = getLoopStart(dur);
       const triggerTime = Math.max(loopStart + 0.15, dur - CROSSFADE_SEC);
 
-      if (!crossfading && fg.currentTime >= triggerTime) {{
+      if (!crossfading && fg.currentTime >= triggerTime - PREPARE_SEC) parkAt(bg, loopStart);
+      const bgReady = bg.readyState >= 3 && !bg.seeking && near(bg, loopStart);
+      if (!crossfading && fg.currentTime >= triggerTime && bgReady) {{
         crossfading = true;
-        bg.currentTime = loopStart;
+        const swap = () => {{
+          bg.style.opacity = "1";
+          fg.style.opacity = "0";
+          setTimeout(() => {{
+            fg.pause();
+            parkAt(fg, loopStart);
+            crossfading = false;
+          }}, CROSSFADE_SEC * 1000 + 40);
+        }};
+        // start the fade when the layer really plays, or after 150 ms at most (a play() promise can stay pending)
+        let started = false;
+        const go = () => {{ if (!started) {{ started = true; swap(); }} }};
+        bg.addEventListener("playing", go, {{ once: true }});
+        setTimeout(go, 150);
         bg.play().catch(() => {{}});
-        bg.style.opacity = "1";
-        fg.style.opacity = "0";
-
-        setTimeout(() => {{
-          fg.pause();
-          fg.currentTime = loopStart;
-          activeLayer = activeLayer === "A" ? "B" : "A";
-          crossfading = false;
-        }}, CROSSFADE_SEC * 1000);
       }}
     }}
-    requestAnimationFrame(monitorDualVideoLoop);
   }}
 
-  function initCoverVideos() {{
-    if (!vidA || !vidA.getAttribute("src")) return;
-    activeLayer = "A";
+  function startVideos(url) {{
     crossfading = false;
     vidA.style.opacity = "1";
     vidB.style.opacity = "0";
-
     vidA.addEventListener("loadedmetadata", () => {{
       vidA.currentTime = 0.0;
       vidA.play().catch(() => {{}});
     }}, {{ once: true }});
-
     vidB.addEventListener("loadedmetadata", () => {{
       vidB.pause();
       vidB.currentTime = getLoopStart(vidB.duration);
     }}, {{ once: true }});
+    vidA.src = url;
+    vidB.src = url;
+    vidA.play().catch(() => {{}});
+  }}
 
+  function initCoverVideos() {{
+    const src = vidA && vidA.dataset.src;
+    if (!src) return;
+    // if the background layer was not ready when the clip ended, the visible one simply loops itself
     [vidA, vidB].forEach((v) => {{
       v.addEventListener("ended", () => {{
+        if (v.style.opacity !== "1") {{ v.pause(); return; }}   // the fading-out layer just stops
         v.currentTime = getLoopStart(v.duration);
         v.play().catch(() => {{}});
       }});
     }});
-
-    vidA.play().catch(() => {{}});
+    fetch(src).then((r) => {{ if (!r.ok) throw new Error(r.status); return r.blob(); }})
+      .then((b) => startVideos(URL.createObjectURL(b)))
+      .catch(() => startVideos(src));   // fallback: stream it directly
   }}
 
   initCoverVideos();
@@ -2329,10 +2350,7 @@ def render_live_mission_control() -> None:
   if (fileInput) fileInput.addEventListener("change", (e) => {{
     const file = e.target.files && e.target.files[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    vidA.src = url;
-    vidB.src = url;
-    initCoverVideos();
+    startVideos(URL.createObjectURL(file));
   }});
 
   // =========================================================================
