@@ -30,7 +30,8 @@
   function mensajeUsuario(texto) {
     const el = nodo("ia-msg ia-msg-usuario", `<span class="ia-quien">You</span><div class="ia-texto"></div>`);
     el.querySelector(".ia-texto").textContent = texto || "";
-    $("ia-limpiar").hidden = false;
+    $("ia-limpiar").hidden = false; $("ia-minimizar").hidden = false;
+    minimizar(false);   // a new question always opens the conversation
     return el;
   }
   function turno(n) {
@@ -43,6 +44,22 @@
     }
     turnoActual = n;
     return turnos.get(n);
+  }
+
+  // Minimize / expand the conversation (the answers stay; only the bar is shown)
+  function minimizar(on) {
+    const chat = $("ia-chat"), b = $("ia-minimizar");
+    chat.classList.toggle("ia-min", on);
+    // Flammy's advisory box under the chat is part of the answer: it collapses and comes back with it
+    const caja = document.getElementById("hub-cmd-drawer");
+    if (caja) {
+      if (on && caja.classList.contains("open")) { caja.classList.remove("open"); caja.dataset.iaMin = "1"; }
+      else if (!on && caja.dataset.iaMin) { caja.classList.add("open"); delete caja.dataset.iaMin; }
+    }
+    b.setAttribute("aria-expanded", String(!on));
+    const n = lista.querySelectorAll(".ia-msg-ia").length;
+    $("ia-minimizar-txt").textContent = on ? `Show conversation${n ? ` (${n})` : ""}` : "Minimize";
+    if (!on) bajar();
   }
 
   // ---------------------------------------------------------------- citas
@@ -261,8 +278,10 @@
     if (silenciada) { vaciarAudio(); try { speechSynthesis.cancel(); } catch (e) {} }
   });
   $("ia-reconectar").addEventListener("click", reconectar);
+  $("ia-minimizar").addEventListener("click", () => minimizar(!$("ia-chat").classList.contains("ia-min")));
   $("ia-limpiar").addEventListener("click", () => {
     lista.innerHTML = ""; turnos.clear(); turnoActual = null; burbujaUsuario = null; $("ia-limpiar").hidden = true;
+    minimizar(false); $("ia-minimizar").hidden = true;
     if (DEPLOYED) reconectar();  // nueva sesión = nueva conversación
   });
   lista.addEventListener("click", (e) => {

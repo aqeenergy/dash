@@ -83,3 +83,9 @@
 .ia-bd-ref { opacity: .72; font-size: .88em; }
 .ia-bd-lista { margin: .2em 0 .5em 1.1em; padding: 0; font-size: .92em; }
 .ia-bd-nota { opacity: .6; font-size: .82em; font-style: italic; }
+
+/* minimized conversation: only the bar stays, so the bubbles are one glance away */
+.ia-chat.ia-min .ia-mensajes { display: none; }
+#ia-minimizar .ia-chev { transition: transform var(--dur-fast) var(--ease-smooth); transform-origin: 12px 12px; }
+#ia-minimizar[aria-expanded="false"] .ia-chev { transform: rotate(180deg); }
+#ia-minimizar[aria-expanded="false"] { color: var(--sky-200); border-color: var(--sky-600); }
