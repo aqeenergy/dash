@@ -2809,7 +2809,7 @@ def render_live_mission_control() -> None:
       return;
     }}
 
-    isTransitioning = true;
+    isTransitioning = true; clearTimeout(window.__flamaTw); window.__flamaTw = setTimeout(() => {{ isTransitioning = false; }}, 1600);  // never lock navigation if an animation is paused (hidden tab)
     const rect = orbEl.getBoundingClientRect();
     const cx   = rect.left + rect.width / 2;
     const cy   = rect.top  + rect.height / 2;
@@ -2853,7 +2853,7 @@ def render_live_mission_control() -> None:
       return;
     }}
 
-    isTransitioning = true;
+    isTransitioning = true; clearTimeout(window.__flamaTw); window.__flamaTw = setTimeout(() => {{ isTransitioning = false; }}, 1600);  // never lock navigation if an animation is paused (hidden tab)
     const currentViewEl = views[activeViewKey];
 
     if (currentViewEl && currentViewEl.animate) {{
