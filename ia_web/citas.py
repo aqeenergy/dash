@@ -122,6 +122,28 @@ def citas_de(nombre: str, argumentos: dict | None, resultado: dict | None) -> li
     if nombre in {"consultar_tabla", "estadisticas_tabla", "describir_tabla"}:
         c = _cita_tabla(nombre, argumentos, resultado)
         return [c] if c else []
+    if nombre == "crear_grafica" and resultado.get("tabla"):
+        tabla = str(resultado["tabla"])
+        cols = [str(c) for c in (argumentos.get("y"), argumentos.get("x"), argumentos.get("agrupar_por")) if c]
+        filtros = _filtros_texto(argumentos.get("filtros"))
+        consulta = f"Chart ({resultado.get('tipo')}): " + ", ".join(cols) + (f" (filter: {filtros})" if filtros else "")
+        res = resultado.get("resumen") or {}
+        filas = res.get("ensayos") if isinstance(res.get("ensayos"), int) else sum(
+            int(v.get("ensayos") or 0) for v in res.values() if isinstance(v, dict))
+        return [{"tipo": "tabla", **_ficha(tabla), "tabla": tabla, "consulta": consulta, "filas": filas,
+                 "archivo": _archivo_tabla(tabla), "columnas": cols}]
+    if nombre == "evaluar_escenario":
+        esc = {k: v for k, v in (resultado.get("escenario") or {}).items()
+               if v not in (None, "", []) and k != "terminos_buscados"}
+        consulta = "Closest tests to the scenario: " + ", ".join(f"{k}={v}" for k, v in esc.items())
+        salida = []
+        for r in resultado.get("resultados") or []:
+            tabla = str(r.get("tabla") or "")
+            if tabla:
+                salida.append({"tipo": "tabla", **_ficha(tabla), "tabla": tabla, "consulta": consulta,
+                               "filas": int(r.get("ensayos_coincidentes") or 0), "archivo": _archivo_tabla(tabla),
+                               "columnas": []})
+        return salida
     return []
 
 

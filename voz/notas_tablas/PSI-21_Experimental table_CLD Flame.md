@@ -1,0 +1,3 @@
+Resumen por días de ACME CLD Flame (llamas laminares de difusión en flujo paralelo): combustible, rango de concentración y número de llamas encendidas cada día. No trae resultados de cada llama.
+
+PSI-21 · ACME CLD Flame, en la ISS (2017-2021). "Test Day" tiene el formato AADDD (año y día del año). "Fuel MFC" y "N2 MFC" son el caudal máximo de cada controlador de flujo, en litros estándar por minuto. "Fuel conc. Range" es la concentración del combustible diluido en nitrógeno. Errores de autocompletado de la hoja de cálculo: "CH5" y "CH6" son CH4 (metano), y "C2H5" es probablemente C2H4 (etileno).

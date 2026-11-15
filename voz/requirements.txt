@@ -8,3 +8,6 @@ python-dotenv
 fastapi
 uvicorn[standard]
 sounddevice       # solo para prueba_terminal.py
+python-docx       # informes Word que crea la IA
+fpdf2             # informes PDF que crea la IA
+matplotlib        # gráficas

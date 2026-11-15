@@ -10,3 +10,7 @@ knowledge_cache/
 # Local / generated
 grabaciones/
 respuesta.wav
+
+# archivos que crea la IA en el servidor
+voz/graficas/
+voz/documentos_generados/

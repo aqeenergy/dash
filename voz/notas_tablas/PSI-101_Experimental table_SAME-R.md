@@ -1,0 +1,3 @@
+Repetición de SAME (humo, no fuego): 109 mediciones del humo de kapton, silicona, mecha de lámpara, pyrell y teflón. Las filas con sufijo "a" (51a, 61a...) son el mismo humo medido después de envejecer.
+
+PSI-101 · SAME-R (Smoke Aerosol Measurement Experiment - Reflight), en la ISS. Mide el tamaño de las partículas del humo, no cómo arde el material. "Inlet velocity" en cm/s; "Duration", "Primary aging time", "Primary mixing time" y "Net aging time" en segundos. En las filas "a" ("aged") solo cuenta el tiempo neto de envejecimiento. "Rt/R0" no se define en la tabla: no lo interpretes. "Date" no incluye el año.

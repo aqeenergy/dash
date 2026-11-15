@@ -8,7 +8,7 @@
   const LOCAL = /^(localhost|127\.|\[::1\]|$)/.test(host);
   const BASE_HTTP = CFG.base ? String(CFG.base).replace(/\/+$/, "") : `http://${host}:${CFG.puerto}`;
   const URL_WS = BASE_HTTP.replace(/^http/, "ws") + "/ws/voz";
-  const DEPLOYED = !!CFG.base || LOCAL;
+  let DEPLOYED = !!CFG.base || LOCAL;   // false = database mode (also the fallback when the AI server is unreachable)
   const $ = (id) => document.getElementById(id);
   const lista = $("ia-mensajes");
   const ESTADOS = { desconectada: "AI not connected", conectando: "Connecting to the AI…", conectada: "AI connected", escuchando: "Listening…", pausa: "AI paused · resumes when you speak or type", error: "AI disconnected" };
@@ -200,6 +200,25 @@
             window.dispatchEvent(new CustomEvent("flama:pregunta", { detail: { pregunta, respuesta: t.texto, citas: t.citas.map((x) => x.cita) } }));
           }
         }
+        break;
+      }
+      case "grafica": {   // chart drawn by the AI (crear_grafica): PNG served by the AI server
+        const t = turno(ev.turno);
+        const f = document.createElement("figure"); f.className = "ia-grafica";
+        const src = BASE_HTTP + String(ev.url || "");
+        f.innerHTML = `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${esc(ev.titulo || "Chart")}" loading="lazy"></a>` +
+          (ev.titulo ? `<figcaption>${esc(ev.titulo)}</figcaption>` : "");
+        f.querySelector("img").addEventListener("load", bajar);
+        t.el.insertBefore(f, t.el.querySelector(".ia-pie")); bajar();
+        break;
+      }
+      case "documento_creado": {   // report written by the AI (crear_documento): download links
+        const t = turno(ev.turno);
+        const d = document.createElement("div"); d.className = "ia-documento";
+        const enlaces = (ev.archivos || []).map((a) =>
+          `<a class="ia-mini" href="${esc(BASE_HTTP + String(a.url || ""))}" target="_blank" rel="noopener" download>${esc(String(a.formato || "").toUpperCase())}</a>`).join(" ");
+        d.innerHTML = `<span class="ia-documento-titulo">📄 ${esc(ev.titulo || "Report")}</span><span class="ia-documento-enlaces">${enlaces}</span>`;
+        t.el.insertBefore(d, t.el.querySelector(".ia-pie")); bajar();
         break;
       }
       case "aviso": nodo("ia-aviso", esc(ev.mensaje)); break;
@@ -617,8 +636,13 @@
     estado("conectada", ESTADO_BD);
     BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
   } else
-  fetch(`${BASE_HTTP}/ia/modo`).then((r) => r.json()).then((m) => {
+  fetch(`${BASE_HTTP}/ia/modo`, { signal: AbortSignal.timeout ? AbortSignal.timeout(90000) : undefined }).then((r) => r.json()).then((m) => {
     modoSimulado = !!m.simulado; $("ia-modo").hidden = !modoSimulado;
     estado("desconectada", modoSimulado ? "AI ready (simulated) · type a scenario" : "AI ready · type or press the mic");
-  }).catch(() => estado("desconectada", "AI server offline"));
+  }).catch(() => {
+    // AI server unreachable: answer from the database files instead of leaving the chat dead
+    DEPLOYED = false;
+    estado("conectada", ESTADO_BD);
+    BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
+  });
 })();

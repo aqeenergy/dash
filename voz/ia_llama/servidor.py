@@ -61,9 +61,9 @@ def _motivo_rechazo(ip: str) -> str | None:
     while historial and ahora - historial[0] > 3600:
         historial.popleft()
     if _activas >= config.MAX_SESIONES_SIMULTANEAS:
-        return "Hay demasiadas personas hablando con la IA ahora mismo. Prueba en un par de minutos."
+        return "Too many people are talking to the AI right now. Please try again in a minute."
     if len(historial) >= config.MAX_SESIONES_IP_HORA:
-        return "Has alcanzado el máximo de conversaciones por hora. Prueba más tarde."
+        return "You have reached the maximum number of conversations per hour. Please try again later."
     historial.append(ahora)
     return None
 
@@ -85,7 +85,7 @@ def salud() -> dict:
 async def ws_voz(ws: WebSocket) -> None:
     global _activas
     await ws.accept()
-    motivo = "Falta GEMINI_API_KEY en el servidor" if not config.GEMINI_API_KEY else _motivo_rechazo(_ip(ws))
+    motivo = "The onboard AI is not configured." if not config.GEMINI_API_KEY else _motivo_rechazo(_ip(ws))
     if motivo:
         await ws.send_text(json.dumps({"tipo": "error", "mensaje": motivo}, ensure_ascii=False))
         await ws.close()

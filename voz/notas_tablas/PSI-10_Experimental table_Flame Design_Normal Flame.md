@@ -1,0 +1,3 @@
+Llamas normales de ACME Flame Design (el combustible sale del quemador a una atmósfera con oxígeno): composición, caudales, oxígeno de la cámara, presión y temperatura adiabática calculada.
+
+PSI-10 · ACME Flame Design, en la ISS (2019-2021). "Day" es el día de la campaña; "Test" el identificador (AADDD + letra). "Xfuel" = fracción de combustible en el chorro; caudales "m" en mg/s; "XO2" = fracción de O2 en la cámara al inicio y al final; presiones en atm. "mean Zst" (fracción de mezcla estequiométrica) y "Tad" (temperatura adiabática de llama, K) son valores calculados, no medidos. "RAMPED" = el caudal se varió durante el ensayo, así que no hay un único valor.

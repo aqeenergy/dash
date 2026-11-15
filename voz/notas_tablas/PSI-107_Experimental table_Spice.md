@@ -1,0 +1,3 @@
+Condiciones de 469 llamas de chorro de SPICE (propileno puro y mezclado al 50 y 75 %, propano, etileno y metano): boquilla (mm), caudal de combustible y velocidad del aire. NO trae el punto de humo medido: los resultados están en las publicaciones.
+
+PSI-107 · SPICE (Smoke Point In Co-flow Experiment), en la ISS. "GMT date" es el día del año; "GMT ignition" y "GMT Flame Off" son las horas de encendido y apagado. Varias filas con la misma hora son varios caudales probados durante una misma llama. "Nozzle" = diámetro de la boquilla en mm; "Fuel Rate" en sccm (centímetros cúbicos estándar por minuto) y en mg/s; "HC Fuel Rate" = caudal del hidrocarburo (igual al total si el combustible es puro); "Air Rate" = velocidad del aire que rodea la llama, en cm/s.
