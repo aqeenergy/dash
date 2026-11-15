@@ -88,7 +88,7 @@
   // ------------------------------------------------------------------ AI topic run
   async function askAI(tema) {
     if (!DEPLOYED) {
-      setStatus(`New AI syntheses need the AI server, which is not connected to this public site. Showing theories from the last full synthesis that match “${esc(tema)}”.`, true);
+      setStatus(`Public site: showing the stored theories (each one built and cited from the base_de_datos files) that match “${esc(tema)}”. New syntheses run on the local version.`);
       applyFilter(); return;
     }
     const btn = $("tl-ask"); btn.disabled = true;

@@ -76,3 +76,10 @@
 
 .voice-btn.ia-escuchando { color: var(--flare-400); border-color: var(--flare-400); }
 @media (prefers-reduced-motion: reduce) { .ia-estado[data-estado="escuchando"] i { animation: none; } }
+
+/* database mode (public site, no LLM) */
+.ia-msg-ia .ia-texto p { margin: 0 0 .55em; }
+.ia-bd-cita { border-left: 2px solid rgba(120, 170, 255, .45); padding-left: .6em; }
+.ia-bd-ref { opacity: .72; font-size: .88em; }
+.ia-bd-lista { margin: .2em 0 .5em 1.1em; padding: 0; font-size: .92em; }
+.ia-bd-nota { opacity: .6; font-size: .82em; font-style: italic; }

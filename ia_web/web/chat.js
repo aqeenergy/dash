@@ -98,10 +98,7 @@
   // ---------------------------------------------------------------- conexión
   function conectar() {
     if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
-    if (!DEPLOYED) {
-      mostrarError("The AI voice server is not connected to this public site yet. Flammy, the 3D simulator, the PSI library and Theory Lab still work.");
-      return;
-    }
+    if (!DEPLOYED) return;  // public site without an AI server: database mode (see below), nothing to connect
     listo = false; estado("conectando");
     $("ia-reconectar").hidden = true;
     ws = new WebSocket(URL_WS);
@@ -250,9 +247,10 @@
       asegurarAltavoz();
       mensajeUsuario(texto);
       burbujaUsuario = null; esperandoRespuesta = true;
+      if (!DEPLOYED) { BaseDatos.responder(texto); return; }
       enviar({ tipo: "texto", texto });
     },
-    alternarMicro() { escuchando ? pararMicro(false) : empezarMicro(); },
+    alternarMicro() { if (!DEPLOYED) return BaseDatos.dictado(); escuchando ? pararMicro(false) : empezarMicro(); },
     get escuchando() { return escuchando; },
   };
 
@@ -260,12 +258,12 @@
     silenciada = !silenciada;
     $("ia-silencio").setAttribute("aria-pressed", String(silenciada));
     $("ia-silencio-txt").textContent = silenciada ? "Voice muted · text only" : "Voice on";
-    if (silenciada) vaciarAudio();
+    if (silenciada) { vaciarAudio(); try { speechSynthesis.cancel(); } catch (e) {} }
   });
   $("ia-reconectar").addEventListener("click", reconectar);
   $("ia-limpiar").addEventListener("click", () => {
     lista.innerHTML = ""; turnos.clear(); turnoActual = null; burbujaUsuario = null; $("ia-limpiar").hidden = true;
-    reconectar();  // nueva sesión = nueva conversación
+    if (DEPLOYED) reconectar();  // nueva sesión = nueva conversación
   });
   lista.addEventListener("click", (e) => {
     const a = e.target.closest(".ia-cita-abrir");
@@ -276,8 +274,238 @@
     }
   });
 
+  // ================================================================ DATABASE MODE (public site, no LLM)
+  // Without an AI server (e.g. flama-nasa.streamlit.app) the chat answers ONLY from the text library of
+  // base_de_datos/ (static/library/search.json + the tables' CSV): it ranks the records' passages, quotes
+  // them verbatim, computes ranges from the exact experimental tables and cites every file it used.
+  // Nothing is generated or invented; if the files do not cover the question it says so.
+  const BaseDatos = (() => {
+    const RAIZ = "app/static/library/";
+    let docs = null, pasajes = null, df = null, N = 0, avgLen = 1, cargando = null;
+    const STOP = new Set(("a an the of and or in on at to for from by with without is are was were be been what which who how why when where " +
+      "does do did can could would should will it its this that these those there about into than then as if not no any some " +
+      "me my we our you your i el la los las un una unos unas de del al y o en con sin por para que qué cual cuál como cómo " +
+      "es son fue ser se lo le les su sus mi mis tu hay más menos muy sobre entre cuando donde dónde porque pasa pasaría ocurre " +
+      "tell explain show give data dime explica cuéntame dato datos").split(" "));
+    const SIN = { fuego: "fire", incendio: "fire", incendios: "fire", llama: "flame", llamas: "flame", oxigeno: "oxygen",
+      extincion: "extinction", extinguir: "extinction", apagar: "extinction", apaga: "extinction", apagan: "extinction",
+      extingue: "extinction", extinguish: "extinction", extinguished: "extinction", extinguishment: "extinction", extinguishing: "extinction", extintor: "suppressant", supresion: "suppression",
+      hollin: "soot", gota: "droplet", gotas: "droplet", combustible: "fuel", presion: "pressure", gravedad: "gravity",
+      microgravedad: "microgravity", luna: "lunar", lunar: "lunar", marte: "mars", materiales: "material", propagacion: "spread",
+      velocidad: "velocity", temperatura: "temperature", humo: "smoke", ventilacion: "ventilation", flujo: "flow",
+      algodon: "cotton", tela: "fabric", tejido: "fabric", plastico: "plastic", ignicion: "ignition", inflamabilidad: "flammability",
+      nave: "spacecraft", estacion: "station", radiacion: "radiation", quemar: "burn", arde: "burn", combustion: "combustion",
+      nitrogeno: "nitrogen", helio: "helium", aire: "air", espesor: "thickness", grosor: "thickness", tasa: "rate",
+      o2: "oxygen", xo2: "oxygen", mo2: "oxygen", n2: "nitrogen", he: "helium", sf6: "sf6",
+      deteccion: "detection", detector: "detection", sensor: "sensor", vela: "candle", metano: "methane", etileno: "ethylene" };
+    const raiz = (w) => { w = SIN[w] || w; if (w.length > 4 && w.endsWith("ies")) return w.slice(0, -3) + "y";
+      if (w.length > 4 && w.endsWith("s") && !w.endsWith("ss")) return w.slice(0, -1); return w; };
+    const GENERICO = new Set(["flame", "fire", "combustion", "microgravity", "test", "type", "sample", "data", "experiment",
+      "time", "date", "day", "number", "investigation", "psi", "space", "study", "effect", "affect", "result", "nasa"]);
+    const tokens = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .split(/[^a-z0-9]+/).filter((w) => w && (w.length > 1 || /\d/.test(w)) && !STOP.has(w)).map(raiz);
+
+    function cargar() {
+      if (cargando) return cargando;
+      cargando = fetch(RAIZ + "search.json").then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then((j) => {
+        docs = j.docs; pasajes = []; df = new Map();
+        for (const d of docs) {
+          if (!d.passages) continue;
+          const cab = tokens(`${d.inv} ${d.acc} ${d.title}`);
+          d.passages.forEach(([sec, txt], i) => {
+            const tk = tokens(txt).concat(tokens(sec));
+            const tf = new Map(); tk.forEach((w) => tf.set(w, (tf.get(w) || 0) + 1));
+            pasajes.push({ d, sec, txt, tf, len: tk.length || 1, cab: new Set(cab), i });
+            new Set(tk).forEach((w) => df.set(w, (df.get(w) || 0) + 1));
+          });
+        }
+        N = pasajes.length; avgLen = pasajes.reduce((a, p) => a + p.len, 0) / Math.max(1, N);
+      });
+      return cargando;
+    }
+
+    function buscar(pregunta) {
+      const q = [...new Set(tokens(pregunta))];
+      const acc = (pregunta.match(/psi[\s-]?(\d+)/i) || [])[1];
+      const k1 = 1.4, b = 0.75;
+      const res = [];
+      for (const p of pasajes) {
+        let s = 0;
+        for (const w of q) {
+          const f = p.tf.get(w); const n = df.get(w) || 0;
+          const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
+          if (f) s += idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * p.len / avgLen));
+          if (p.cab.has(w)) s += idf * 0.8;   // the question names this investigation (FLEX, SAFFIRE, …)
+        }
+        if (acc && p.d.acc === "PSI-" + acc) s += 6;
+        if (p.sec === "Objective" || /result|finding|conclusion|summary|description/i.test(p.sec)) s *= 1.15;
+        if (/^[A-Z][A-Za-z /()-]{2,40}: /.test(p.txt) && p.txt.length < 200) s *= 0.25;   // metadata line
+        if (/^Publications/i.test(p.sec)) s *= 0.4;
+        if (s > 0) res.push({ p, s });
+      }
+      res.sort((a, b2) => b2.s - a.s);
+      return { q, res };
+    }
+
+    // the most relevant sentences of a passage (verbatim), so a long abstract is quoted, not dumped
+    function extracto(txt, q) {
+      const frases = txt.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [txt];
+      if (txt.length <= 420) return txt.trim();
+      const pun = frases.map((f, i) => ({ i, f, s: tokens(f).filter((w) => q.includes(w)).length }));
+      const mejor = pun.slice().sort((a, b) => b.s - a.s || a.i - b.i).slice(0, 2).sort((a, b) => a.i - b.i);
+      return mejor.map((m) => m.f.trim()).join(" … ");
+    }
+
+    function csv(texto) {
+      const filas = []; let fila = [], campo = "", comillas = false;
+      for (let i = 0; i < texto.length; i++) {
+        const c = texto[i];
+        if (comillas) { if (c === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else comillas = false; } else campo += c; }
+        else if (c === '"') comillas = true;
+        else if (c === ",") { fila.push(campo); campo = ""; }
+        else if (c === "\n" || c === "\r") { if (c === "\r" && texto[i + 1] === "\n") i++; fila.push(campo); filas.push(fila); fila = []; campo = ""; }
+        else campo += c;
+      }
+      if (campo || fila.length) { fila.push(campo); filas.push(fila); }
+      return filas.filter((f) => f.some((x) => x.trim()));
+    }
+    const fmt = (x) => Math.abs(x) >= 100 ? x.toFixed(0) : Math.abs(x) >= 1 ? (+x.toFixed(2)).toString() : (+x.toPrecision(2)).toString();
+
+    async function tablas(q, accs) {
+      const util = q.filter((w) => !GENERICO.has(w));
+      const cand = docs.filter((d) => d.cols && d.kind === "table").map((d) => {
+        const propio = new Set(tokens(d.inv));   // "FLEX" must not match the column "FLEX Test #"
+        const enc = d.cols.map((c, i) => ({ c, i, s: tokens(c).filter((w) => util.includes(w) && !propio.has(w)).length }))
+          .filter((x) => x.s > 0 && !/#|identifier|id/i.test(x.c));
+        const s = enc.reduce((a, x) => a + 2 * x.s, 0) + (accs.includes(d.acc) ? 3 : 0);
+        return { d, enc, s };
+      }).filter((x) => x.s >= 3).sort((a, b) => b.s - a.s).slice(0, 4);
+      const out = [];
+      for (const { d, enc } of cand) {
+        if (out.length >= 2) break;
+        try {
+          const filas = csv(await (await fetch(RAIZ + d.id)).text());
+          const cab = filas[0] || []; let datos = filas.slice(1);
+          // rows whose text values name what was asked (e.g. Material = Cotton): the query is applied to the table
+          let filtro = "";
+          const enCabecera = new Set(cab.flatMap((c) => tokens(c)));
+          const valores = util.filter((w) => !enCabecera.has(w));   // words that name a value, not a column
+          for (let i = 0; i < cab.length && !filtro; i++) {
+            if (/#|identifier|notes?|comments?|date|gmt|camera|pi/i.test(cab[i])) continue;
+            const vals = datos.map((f) => String(f[i] || ""));
+            if (vals.filter((v) => isFinite(parseFloat(v))).length > vals.length / 2) continue;
+            for (const w of valores) {
+              const sel = datos.filter((f) => tokens(f[i]).includes(w));
+              if (sel.length && sel.length < datos.length) { datos = sel; filtro = `${cab[i].trim()} contains “${w}”`; break; }
+            }
+          }
+          const resumen = [];
+          for (const { c, i } of enc.slice(0, 3)) {
+            const nums = datos.map((f) => parseFloat(String(f[i] || "").replace(",", "."))).filter((x) => isFinite(x)).sort((a, b) => a - b);
+            if (nums.length >= 2) resumen.push(`${c.trim()}: ${fmt(nums[0])} – ${fmt(nums[nums.length - 1])} (median ${fmt(nums[Math.floor(nums.length / 2)])}, ${nums.length} tests)`);
+            else {
+              const vals = {}; datos.forEach((f) => { const v = (f[i] || "").trim(); if (v) vals[v] = (vals[v] || 0) + 1; });
+              const top = Object.entries(vals).sort((a, b) => b[1] - a[1]).slice(0, 4);
+              if (top.length > 1 || (top.length && filtro)) resumen.push(`${c.trim()}: ${top.map(([v, n]) => `${v} (${n})`).join(", ")}`);
+            }
+          }
+          if (!resumen.length) continue;
+          out.push({ d, filas: datos.length, filtro, columnas: enc.slice(0, 3).map((x) => x.c.trim()), resumen });
+        } catch (e) { /* table not reachable: skip it rather than guess */ }
+      }
+      return out;
+    }
+
+    async function responder(pregunta) {
+      const n = (turnoActual != null ? turnoActual : 0) + 1;
+      const t = turno(n);
+      t.pregunta = pregunta;
+      t.el.querySelector(".ia-consultando").hidden = false;
+      try { await cargar(); } catch (e) {
+        t.el.querySelector(".ia-texto").textContent = "The database library could not be loaded on this site. Reload the page and try again.";
+        t.cerrado = true; t.el.querySelector(".ia-consultando").hidden = true; pintarPie(t, false); return;
+      }
+      const { q, res } = buscar(pregunta);
+      // rank investigations by their best passages (not by one lucky line); an exact acronym in the question wins
+      const qn = " " + tokens(pregunta).join(" ") + " ";
+      const porInv = new Map();
+      for (const r of res) { const k = r.p.d.id; if (!porInv.has(k)) porInv.set(k, []); const l = porInv.get(k); if (l.length < 3) l.push(r); }
+      const ranking = [...porInv.values()].map((l) => {
+        const d = l[0].p.d, inv = tokens(d.inv).join(" ");
+        let s = l.reduce((a, r) => a + r.s, 0);
+        if (inv && qn.includes(" " + inv + " ")) s *= 2.5;
+        return { d, l, s };
+      }).sort((a, b) => b.s - a.s);
+      const elegidos = [], vistos = new Set();
+      for (const [j, g] of ranking.slice(0, 3).entries()) {
+        if (j && g.s < ranking[0].s * 0.3) break;
+        for (const r of g.l.slice(0, j ? 1 : 2)) {
+          if (elegidos.length >= 4 || vistos.has(r.p.txt)) continue;
+          vistos.add(r.p.txt); elegidos.push(r);
+        }
+      }
+      const accs = [...new Set(elegidos.map((r) => r.p.d.acc))];
+      const tabs = elegidos.length ? await tablas(q, accs) : [];
+      let html = "", hablar = "", id = 0;
+      t.citas = [];
+      if (!elegidos.length) {
+        html = "I could not find this in the database files. Try naming a material, gas, fuel, gravity level or an experiment (for example FLEX, SAFFIRE, BASS, ACME).";
+        hablar = html;
+      } else {
+        const d0 = elegidos[0].p.d;
+        html = `<p>Closest investigation in the database: <b>${esc(d0.inv === d0.acc ? "" : d0.inv + " — ")}${esc(d0.title)} (${esc(d0.acc)})</b>.</p>`;
+        hablar = `The closest investigation in the database is ${d0.inv}, ${d0.acc}. `;
+        for (const r of elegidos) {
+          const ex = extracto(r.p.txt, q); id++;
+          html += `<p class="ia-bd-cita">“${esc(ex)}” <span class="ia-bd-ref">— ${esc(r.p.d.inv === r.p.d.acc ? r.p.d.acc : r.p.d.inv + " (" + r.p.d.acc + ")")}, ${esc(r.p.sec)} <b>[${id}]</b></span></p>`;
+          if (id === 1) hablar += ex;
+          t.citas.push({ id, cita: { tipo: "documento", investigacion: r.p.d.inv, accesion: r.p.d.acc, titulo: r.p.d.title,
+            fuente: "base_de_datos/" + r.p.d.file + " · section “" + r.p.sec + "”", extracto: ex, archivo: r.p.d.id } });
+        }
+        for (const tb of tabs) {
+          id++;
+          html += `<p class="ia-bd-cita"><b>${esc(tb.d.label)}</b> (${esc(tb.d.acc)}) · ${tb.filas} tests${tb.filtro ? " where " + esc(tb.filtro) : ""}:</p>` +
+            (tb.resumen.length ? `<ul class="ia-bd-lista">${tb.resumen.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "") +
+            `<p class="ia-bd-ref">Computed from the table file <b>[${id}]</b></p>`;
+          t.citas.push({ id, cita: { tipo: "tabla", investigacion: tb.d.inv, accesion: tb.d.acc, titulo: tb.d.title, tabla: tb.d.label,
+            consulta: (tb.filtro ? "rows where " + tb.filtro + " · " : "all rows · ") + "columns " + tb.columnas.join(" · "), filas: tb.filas,
+            columnas: tb.columnas, archivo: tb.d.id } });
+        }
+        html += `<p class="ia-bd-nota">Database mode: quoted verbatim from the base_de_datos files, no generative AI. Open each source below to check it.</p>`;
+      }
+      t.texto = hablar;
+      t.el.querySelector(".ia-texto").innerHTML = html;
+      t.cerrado = true; t.el.querySelector(".ia-consultando").hidden = true;
+      pintarPie(t, false);
+      if (!silenciada && "speechSynthesis" in window) {
+        try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(hablar.slice(0, 400)); u.lang = "en-US"; speechSynthesis.speak(u); } catch (e) {}
+      }
+      window.dispatchEvent(new CustomEvent("flama:pregunta", { detail: { pregunta, respuesta: hablar, citas: t.citas.map((x) => x.cita) } }));
+    }
+
+    // voice input with the browser's own speech recognition (Chrome / Edge); no audio leaves to Gemini
+    let rec = null;
+    function dictado() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { nodo("ia-error", "<span>Voice input needs Chrome or Edge on this site. You can type the question instead.</span>"); return; }
+      if (rec) { try { rec.stop(); } catch (e) {} return; }
+      rec = new SR(); rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 1;
+      const fin = () => { rec = null; escuchando = false; document.getElementById("hub-voice-btn")?.classList.remove("ia-escuchando", "recording"); estado("conectada", ESTADO_BD); };
+      rec.onresult = (e) => { const txt = e.results[0][0].transcript; fin(); window.flamaChat.preguntar(txt); };
+      rec.onerror = (e) => { fin(); if (e.error === "not-allowed") nodo("ia-error", "<span>The browser blocked the microphone. Allow access (padlock icon) and try again.</span>"); };
+      rec.onend = () => { if (rec) fin(); };
+      try { rec.start(); escuchando = true; estado("escuchando"); document.getElementById("hub-voice-btn")?.classList.add("ia-escuchando", "recording"); } catch (e) { fin(); }
+    }
+    return { responder, dictado, cargar };
+  })();
+  const ESTADO_BD = "Database mode · answers from the base_de_datos files";
+
   // Estado inicial sin abrir sesión (abrir el WebSocket ya inicia una sesión de Gemini)
-  if (!DEPLOYED) estado("desconectada", "AI voice server not deployed on this site"); else
+  if (!DEPLOYED) {
+    estado("conectada", ESTADO_BD);
+    $("ia-modo").textContent = "No generative AI · verbatim quotes + table data"; $("ia-modo").hidden = false;
+    BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
+  } else
   fetch(`${BASE_HTTP}/ia/modo`).then((r) => r.json()).then((m) => {
     modoSimulado = !!m.simulado; $("ia-modo").hidden = !modoSimulado;
     estado("desconectada", modoSimulado ? "AI ready (simulated) · type a scenario" : "AI ready · type or press the mic");

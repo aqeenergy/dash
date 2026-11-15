@@ -38,6 +38,7 @@ DB_DIR = Path(__file__).resolve().parent / "base_de_datos"      # READ-ONLY sour
 OUT_DIR = Path(__file__).resolve().parent / "knowledge_cache"     # every derived file lives here
 INDEX_FILE = "psi_index.json"
 BUILD_INFO_FILE = "knowledge_build_info.json"
+SCHEMA = 2  # bump when the derived JSON format changes: forces a rebuild of an existing cache
 CURATED_FILE = "experiments.json.py"  # curated flight-program entries (valid JSON saved with a .py name)
 
 TARGETS = (
@@ -416,6 +417,11 @@ def ensure_knowledge(force: bool = False) -> dict[str, Any]:
     if not DB_DIR.exists():
         return {"built": [], "kept": [], "error": f"missing {DB_DIR}"}
     src_time = _source_mtime()
+    try:
+        old_schema = json.loads((OUT_DIR / BUILD_INFO_FILE).read_text(encoding="utf-8")).get("schema")
+    except Exception:
+        old_schema = None
+    force = force or old_schema != SCHEMA
     stale = [n for n in TARGETS
              if force or not (OUT_DIR / n).exists() or (OUT_DIR / n).stat().st_mtime < src_time]
     if not stale:
@@ -435,7 +441,7 @@ def ensure_knowledge(force: bool = False) -> dict[str, Any]:
     for name in stale:
         _write(name, payloads[name])
     _write(BUILD_INFO_FILE, {
-        "generator": "psi_database.py", "investigations": len(cards),
+        "generator": "psi_database.py", "schema": SCHEMA, "investigations": len(cards),
         "rebuilt": stale, "note": "Derived from the raw PSI metadata in base_de_datos/ (read-only); delete a file here to regenerate it.",
     })
     return {"built": stale, "kept": [n for n in TARGETS if n not in stale], "investigations": len(cards)}

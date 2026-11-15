@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parent
 DB_DIR = ROOT / "base_de_datos"          # READ-ONLY
 OUT_DIR = ROOT / "static" / "library"    # derived text library
 URL = "app/static/library/"  # relative (Streamlit Cloud serves under /~/+/)
-VERSION = 5                              # bump to force a rebuild after format changes
+VERSION = 6                              # bump to force a rebuild after format changes
 
 DERIVED = {"class_notes.json", "experiments.json", "fire_response.json", "knowledge_build_info.json",
            "materials.json", "mission_presets.json", "psi_index.json", "rules.json", "sources.json"}
@@ -268,8 +268,57 @@ def build(force: bool = False) -> list[dict]:
                             "kind": "record", "acc": acc, "investigation": str(src_.get("Acronym") or "").strip() or acc,
                             "title": str(src_.get("Title") or "").strip(), "size": len(text.encode("utf-8")),
                             "url": URL + out_name, "area": src_.get("Research Area", "")})
+    _write_search(entries)
     manifest_path.write_text(json.dumps({"version": VERSION, "files": entries}, ensure_ascii=False), encoding="utf-8")
     return entries
+
+
+def _passages(md: str) -> list[list[str]]:
+    """[section, text] passages of a record, verbatim from its library .md (for the database-only chat)."""
+    out, section, buf = [], "Summary", []
+
+    def flush():
+        t = " ".join(" ".join(buf).split())
+        if len(t) > 25:
+            out.append([section, t[:1200]])
+        buf.clear()
+
+    for line in md.splitlines():
+        if line.startswith("#"):
+            flush()
+            section = line.lstrip("#").strip() or section
+        elif not line.strip():
+            flush()
+        elif line.lstrip().startswith(("- ", "* ")):
+            flush()
+            buf.append(line.lstrip()[2:].replace("**", ""))
+            flush()
+        else:
+            buf.append(line.replace("**", ""))
+    flush()
+    return out
+
+
+def _write_search(entries: list[dict]) -> None:
+    """search.json: every record split into verbatim passages + every table's columns. Used by the
+    public site's database-only chat (no LLM): it ranks these passages and cites the exact file."""
+    docs = []
+    for e in entries:
+        path = OUT_DIR / e["id"]
+        try:
+            text = path.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        base = {"id": e["id"], "acc": e.get("acc", ""), "inv": e.get("investigation", ""), "title": e.get("title", ""),
+                "file": e["file"], "kind": e["kind"]}
+        if e["kind"] in ("record", "catalog"):
+            docs.append({**base, "passages": _passages(text)})
+        elif e["kind"] in ("table", "workbook"):
+            first = text.splitlines()[0] if text else ""
+            cols = next(csv.reader([first])) if first else []
+            docs.append({**base, "label": e.get("label", ""), "cols": cols, "rows": e.get("rows", 0)})
+    (OUT_DIR / "search.json").write_text(json.dumps({"version": VERSION, "docs": docs}, ensure_ascii=False),
+                                         encoding="utf-8")
 
 
 def file_for_table(table_stem: str) -> str | None:

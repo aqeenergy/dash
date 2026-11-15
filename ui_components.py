@@ -36,7 +36,12 @@ import streamlit.components.v1 as components
 try:
     import psi_database
 
-    psi_database.ensure_knowledge()
+    if psi_database.ensure_knowledge().get("built"):
+        # a running server (e.g. Streamlit Cloud after a git push) may hold the old knowledge in memory
+        import importlib, sys as _sys
+        for _m in ("flammy_agent.knowledge", "flammy_agent.engine", "flammy_agent.agent", "flammy_agent"):
+            if _m in _sys.modules:
+                importlib.reload(_sys.modules[_m])
     _PSI_CARDS: list[dict[str, Any]] = psi_database.investigation_cards()
 except Exception:
     logging.getLogger("flama").exception("PSI knowledge bootstrap failed")
