@@ -276,7 +276,7 @@ _PSI_BROWSER_HTML = """
   .psi-chip:hover { border-color: #6FA3D8; color: #E8F1FA; }
   .psi-chip.active { border-color: #6FA3D8; color: #E8F1FA; background: rgba(18, 48, 110, 0.45); }
   .psi-count { font: 500 12px var(--font-ui); color: #8A909A; letter-spacing: .01em; margin: 8px 2px 12px; }
-  .psi-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .psi-card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; }
   .psi-card { background: #101216; border: 1px solid #1A1D23; border-radius: 12px; padding: 14px 16px;
       display: flex; flex-direction: column; gap: 7px; transition: border-color .25s, transform .25s; }
   .psi-card:hover { border-color: #2F63B0; transform: translateY(-2px); }
@@ -1130,7 +1130,7 @@ def render_live_mission_control() -> None:
   .cover-stage {{
     position: relative;
     width: 100%;
-    min-height: 92vh;
+    min-height: calc(var(--app-vh, 100vh) * 0.92);
     background: #000000;
     display: flex;
     flex-direction: column;
@@ -1744,6 +1744,18 @@ def render_live_mission_control() -> None:
   }}
   @media (max-width: 980px) {{
     .sim-sec1-grid {{ grid-template-columns: 1fr; }}
+  }}
+  /* ---------- PHONES: use the whole width, no sideways scroll ---------- */
+  html, body {{ overflow-x: hidden; }}
+  @media (max-width: 600px) {{
+    .workspace-wrap {{ padding-left: 8px !important; padding-right: 8px !important; }}
+    .workspace-card {{ padding: 16px 12px !important; border-radius: 16px; }}
+    .empty-module-box {{ padding: 16px 10px !important; }}
+    .ws-header-row {{ flex-wrap: wrap; gap: 10px; }}
+    .ws-title {{ font-size: clamp(24px, 7.4vw, 34px); }}
+    .psi-browser {{ margin-top: 18px; }}
+    .psi-card {{ padding: 12px 12px; }}
+    #flammy-bubble {{ max-width: calc(100vw - 24px); font-size: 13px; }}
   }}
 
   .ctrl-row {{
@@ -3271,6 +3283,13 @@ def render_live_mission_control() -> None:
   }});
 
   // Iframe auto-height (used by every bubble)
+  function setAppVh() {{
+    let h = window.innerHeight;
+    try {{ h = window.parent.innerHeight || h; }} catch (e) {{}}
+    document.documentElement.style.setProperty("--app-vh", h + "px");
+  }}
+  setAppVh();
+  try {{ window.parent.addEventListener("resize", setAppVh); }} catch (e) {{}}
   function syncIframeHeight() {{
     if (window.frameElement) {{
       const h = document.body.scrollHeight;
@@ -3337,7 +3356,12 @@ def render_live_mission_control() -> None:
     function place(x, y) {{
       const w = document.documentElement.clientWidth;
       x = Math.max(8, Math.min(x, w - SIZE - 8));
-      root.classList.toggle("bubble-right", x < 340);
+      const bw = bubble.offsetWidth || 260;
+      const fitsR = x + 70 + bw <= w - 8, fitsL = x + 6 - bw >= 8;
+      const lado = x < 340 ? (fitsR ? "r" : fitsL ? "l" : "c") : (fitsL ? "l" : fitsR ? "r" : "c");
+      root.classList.toggle("bubble-right", lado === "r");
+      bubble.style.left = lado === "c" ? (Math.max(8, Math.min(x + SIZE / 2 - bw / 2, w - bw - 8)) - x) + "px" : "";
+      bubble.style.right = lado === "c" ? "auto" : "";
       root.style.transform = `translate3d(${{Math.round(x)}}px, ${{Math.round(y)}}px, 0)`;
     }}
 

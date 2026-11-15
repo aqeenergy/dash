@@ -13,6 +13,7 @@
 }
 @media (max-width: 760px) {
   .s3-root { grid-template-columns: 1fr; }
+  .s3-root > .s3-stage { order: -1; }   /* phones: the 3D view first, controls below */
   .s3-root > .s3-panel:last-child { grid-template-columns: 1fr; }
 }
 
@@ -76,7 +77,7 @@
   background: radial-gradient(ellipse at 50% 40%, #0A1838 0%, #07080A 70%);
   border: 1px solid var(--space-700);
 }
-@media (max-width: 760px) { .s3-canvas-wrap { height: 440px; } }
+@media (max-width: 760px) { .s3-canvas-wrap { height: min(440px, calc(var(--app-vh, 100vh) * 0.62)); min-height: 320px; } }
 .s3-canvas-wrap canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; touch-action: none; }
 .s3-canvas-wrap canvas:active { cursor: grabbing; }
 .s3-loading {
