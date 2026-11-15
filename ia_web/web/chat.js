@@ -484,18 +484,111 @@
     }
 
     // voice input with the browser's own speech recognition (Chrome / Edge); no audio leaves to Gemini
-    let rec = null;
-    function dictado() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { nodo("ia-error", "<span>Voice input needs Chrome or Edge on this site. You can type the question instead.</span>"); return; }
-      if (rec) { try { rec.stop(); } catch (e) {} return; }
-      rec = new SR(); rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 1;
-      const fin = () => { rec = null; escuchando = false; document.getElementById("hub-voice-btn")?.classList.remove("ia-escuchando", "recording"); estado("conectada", ESTADO_BD); };
-      rec.onresult = (e) => { const txt = e.results[0][0].transcript; fin(); window.flamaChat.preguntar(txt); };
-      rec.onerror = (e) => { fin(); if (e.error === "not-allowed") nodo("ia-error", "<span>The browser blocked the microphone. Allow access (padlock icon) and try again.</span>"); };
-      rec.onend = () => { if (rec) fin(); };
-      try { rec.start(); escuchando = true; estado("escuchando"); document.getElementById("hub-voice-btn")?.classList.add("ia-escuchando", "recording"); } catch (e) { fin(); }
+    // ---------------------------------------------------------------- voice input (no Gemini)
+    // 1) the browser's speech recognition (Chrome / Edge / Safari), in the user's language, with live text;
+    // 2) if that service is missing or fails, Whisper running INSIDE the browser (transformers.js, ~40 MB once).
+    const IDIOMA = /^es/i.test(navigator.language || "") ? "es-ES" : (navigator.language || "en-US");
+    const TF_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2";
+    let rec = null, usarWhisper = false, asr = null, grab = null, vivo = null;
+    function marcar(on, txt) {
+      escuchando = on;
+      const b = document.getElementById("hub-voice-btn");
+      if (b) { b.classList.toggle("recording", on); b.classList.toggle("ia-escuchando", on); }
+      estado(on ? "escuchando" : "conectada", txt || (on ? "Listening… speak now" : ESTADO_BD));
     }
+    function aviso(txt) { nodo("ia-error", `<span>${esc(txt)}</span>`); }
+    function burbujaViva(txt) {
+      if (!vivo) { vivo = mensajeUsuario(""); vivo.classList.add("ia-vivo"); }
+      vivo.querySelector(".ia-texto").textContent = txt; bajar();
+    }
+    function enviarVoz(txt) {
+      txt = (txt || "").trim();
+      if (vivo) { vivo.remove(); vivo = null; }
+      if (!txt) { aviso("I did not catch any words. Press the mic and speak again, a bit closer to the microphone."); return; }
+      window.flamaChat.preguntar(txt);
+    }
+
+    function dictado() {
+      if (rec) { try { rec.stop(); } catch (e) {} return; }
+      if (grab) { grab.parar(); return; }
+      try { speechSynthesis.cancel(); } catch (e) {}
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR || usarWhisper) return whisper();
+      let final = "", fallo = null;
+      rec = new SR(); rec.lang = IDIOMA; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        let tmp = ""; final = "";
+        for (const r of e.results) { if (r.isFinal) final += r[0].transcript; else tmp += r[0].transcript; }
+        burbujaViva((final + " " + tmp).trim());
+      };
+      rec.onerror = (e) => { fallo = e.error; };
+      rec.onend = () => {
+        rec = null; marcar(false);
+        if (fallo === "network" || fallo === "service-not-allowed" || fallo === "language-not-supported") {
+          usarWhisper = true;   // the browser's speech service is not available here: switch to in-browser Whisper
+          if (vivo) { vivo.remove(); vivo = null; }
+          return whisper();
+        }
+        if (fallo === "not-allowed") { aviso("The browser blocked the microphone. Click the padlock in the address bar, allow the microphone and press the mic again."); return; }
+        if (fallo === "audio-capture") { aviso("No microphone was found. Connect one and press the mic again."); return; }
+        if (fallo === "aborted") { if (vivo) { vivo.remove(); vivo = null; } return; }
+        enviarVoz(final || (vivo ? vivo.querySelector(".ia-texto").textContent : ""));
+      };
+      try { rec.start(); marcar(true); } catch (e) { rec = null; usarWhisper = true; whisper(); }
+    }
+
+    function cargarWhisper() {
+      if (!asr) asr = import(TF_URL).then((T) => { T.env.allowLocalModels = false; return T.pipeline("automatic-speech-recognition", "Xenova/whisper-tiny"); });
+      return asr;
+    }
+    async function whisper() {
+      let stream;
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } }); }
+      catch (e) {
+        aviso(e && e.name === "NotAllowedError" ? "The browser blocked the microphone. Click the padlock in the address bar, allow the microphone and press the mic again."
+          : "Could not open the microphone: " + (e && e.message ? e.message : e)); return;
+      }
+      cargarWhisper().catch(() => {});   // download the model while the user speaks
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(stream);
+      const proc = ctx.createScriptProcessor(4096, 1, 1);
+      const trozos = []; let hablado = false, silencio = 0, total = 0, parado = false;
+      proc.onaudioprocess = (ev) => {
+        const x = ev.inputBuffer.getChannelData(0); trozos.push(new Float32Array(x));
+        let e = 0; for (let i = 0; i < x.length; i++) e += x[i] * x[i];
+        const rms = Math.sqrt(e / x.length), dt = x.length / ctx.sampleRate; total += dt;
+        if (rms > 0.02) { hablado = true; silencio = 0; } else if (hablado) silencio += dt;
+        if ((hablado && silencio > 1.4) || total > 15 || (!hablado && total > 8)) grab && grab.parar();
+      };
+      src.connect(proc); proc.connect(ctx.destination);
+      marcar(true, "Listening… speak now (press the mic again to finish)");
+      grab = {
+        async parar() {
+          if (parado) return; parado = true; grab = null;
+          try { proc.disconnect(); src.disconnect(); } catch (e) {}
+          stream.getTracks().forEach((t) => t.stop());
+          const sr = ctx.sampleRate; ctx.close();
+          if (!hablado) { marcar(false); aviso("I did not hear anything. Press the mic and speak again, a bit closer to the microphone."); return; }
+          // join + resample to 16 kHz for Whisper
+          const n = trozos.reduce((a, t) => a + t.length, 0), raw = new Float32Array(n); let o = 0;
+          for (const t of trozos) { raw.set(t, o); o += t.length; }
+          const m = Math.floor(n * 16000 / sr), pcm = new Float32Array(m);
+          for (let i = 0; i < m; i++) pcm[i] = raw[Math.min(n - 1, Math.floor(i * sr / 16000))];
+          marcar(false, "Transcribing your voice…"); burbujaViva("…");
+          try {
+            const t0 = Date.now(); let carga = setTimeout(() => estado("conectada", "Loading the speech model (first time only)…"), 1500);
+            const f = await cargarWhisper(); clearTimeout(carga);
+            const out = await f(pcm, { language: IDIOMA.startsWith("es") ? "spanish" : "english", task: "transcribe" });
+            estado("conectada", ESTADO_BD);
+            enviarVoz(out && out.text);
+          } catch (e) {
+            estado("conectada", ESTADO_BD); if (vivo) { vivo.remove(); vivo = null; }
+            aviso("Voice recognition could not start in this browser (" + (e && e.message ? e.message : e) + "). You can type the question instead.");
+          }
+        },
+      };
+    }
+    window.__flamaVoz = { cargarWhisper, transcribir: async (pcm, idioma) => (await cargarWhisper())(Float32Array.from(pcm), { language: idioma || "english", task: "transcribe" }) };
     return { responder, dictado, cargar };
   })();
   const ESTADO_BD = "AI connected";
