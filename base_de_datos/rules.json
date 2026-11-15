@@ -1,0 +1,386 @@
+[
+  {
+    "id": "o2-danger",
+    "level": "danger",
+    "title": "Oxygen-enriched atmosphere - flammability limits widen sharply",
+    "short": "above ~30 % O2 most cabin materials ignite easier and spread flame faster.",
+    "why": [
+      "Material flammability limits widen as the O2 fraction rises; CFI-G ran gaseous flames up to 85 % O2 to map this regime.",
+      "Autoignition delays shorten in enriched O2, so weak ignition sources become credible."
+    ],
+    "actions": [
+      "Add N2 to pull the O2 fraction down while holding ppO2 at 21.3 kPa.",
+      "Freeze hot-work and high-power operations until the mix is corrected.",
+      "Re-verify exposed materials against their enriched-O2 limits."
+    ],
+    "sources": [
+      "psi-159",
+      "fm2"
+    ],
+    "when": {
+      "o2_min": 30.0
+    }
+  },
+  {
+    "id": "o2-caution",
+    "level": "caution",
+    "title": "O2 fraction above standard air",
+    "short": "between 23.5 and 30 % O2 the flammable-material set grows; margins shrink.",
+    "why": [
+      "Several materials that pass at 21 % O2 sustain flames in mildly enriched atmospheres."
+    ],
+    "actions": [
+      "Check the selected material's limit against the current O2 fraction.",
+      "Keep a >=3-pt design margin below the material limit."
+    ],
+    "sources": [
+      "psi-159",
+      "glenn"
+    ],
+    "when": {
+      "o2_min": 23.5,
+      "o2_max": 30.0
+    }
+  },
+  {
+    "id": "exploration-atmo",
+    "level": "danger",
+    "title": "Exploration atmosphere: low pressure + enriched O2",
+    "short": "8.2-10.2 psi with 26-34 % O2 keeps crews EVA-ready but widens flammability limits.",
+    "why": [
+      "FM2-class testing targets exactly this trade: 34 % O2 at 8.2 psia versus 21 % at 14.7 psia.",
+      "At fixed ppO2 a lower total pressure means a higher O2 fraction, which controls flame spread."
+    ],
+    "actions": [
+      "Restrict materials to those qualified for the enriched fraction.",
+      "Increase detection coverage in low-pressure modules."
+    ],
+    "sources": [
+      "fm2",
+      "psi-98"
+    ],
+    "when": {
+      "o2_min": 26.0,
+      "pressure_max_kpa": 72.0
+    }
+  },
+  {
+    "id": "micro-quiescent",
+    "level": "info",
+    "title": "Quiescent microgravity - weak flames, hidden smolder",
+    "short": "with no airflow a flame dims toward diffusive burning, but smolder and detection become the problem.",
+    "why": [
+      "Without buoyancy, quenching a flame of oxidizer flow makes it dim and blue (BASS).",
+      "Smoke does not rise in microgravity; detectors depend on the ventilation that is now off."
+    ],
+    "actions": [
+      "Treat 'flame out' as unverified: monitor CO/CO2 after apparent extinction.",
+      "Restore detection airflow sampling as soon as safe."
+    ],
+    "sources": [
+      "psi-26",
+      "psi-101"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "ventilation": [
+        "none"
+      ]
+    }
+  },
+  {
+    "id": "micro-flow",
+    "level": "caution",
+    "title": "Forced airflow replaces buoyancy and feeds the flame",
+    "short": "in microgravity even 10-20 cm/s of duct flow strengthens flame spread.",
+    "why": [
+      "BASS-II mapped solid-fuel burning from 0 to 53 cm/s: low imposed flows sustain and strengthen flames that would otherwise weaken."
+    ],
+    "actions": [
+      "On fire alarm, stop HVAC flow in the affected volume first.",
+      "Keep cable runs and fabrics out of duct outlets."
+    ],
+    "sources": [
+      "psi-25",
+      "psi-26"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "ventilation": [
+        "forced"
+      ]
+    }
+  },
+  {
+    "id": "micro-fabric",
+    "level": "caution",
+    "title": "Fabrics in microgravity burn beyond 1-g predictions",
+    "short": "cotton-blend fabrics kept burning in micro-g at conditions ground tests called marginal.",
+    "why": [
+      "BASS burned PMMA and fabric samples in orbit; Saffire-II spread flames over large fabric sheets without crew risk.",
+      "The 1-g upward test is not always the conservative case in microgravity."
+    ],
+    "actions": [
+      "Prefer aramid over cotton blends near power or ducts.",
+      "Apply micro-g-informed margins, not raw 1-g pass/fail."
+    ],
+    "sources": [
+      "psi-26",
+      "psi-99"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "material": [
+        "fabric"
+      ]
+    }
+  },
+  {
+    "id": "standard-gap",
+    "level": "caution",
+    "title": "1-g flammability standard may not transfer to micro-g",
+    "short": "a NASA-STD-6001 pass on the ground does not guarantee the same margin in orbit.",
+    "why": [
+      "SoFIE and FLARE exist precisely to tie the 1-g standard test to low-gravity behavior; BASS-II found regimes where micro-g burns stronger."
+    ],
+    "actions": [
+      "Flag materials qualified only by ground tests.",
+      "Use flow-and-O2-specific limits for orbit configurations."
+    ],
+    "sources": [
+      "psi-25",
+      "glenn"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "topic": [
+        "standard"
+      ]
+    }
+  },
+  {
+    "id": "lunar-sparse",
+    "level": "caution",
+    "title": "Partial gravity - sparse data, interpolated regime",
+    "short": "at 0.16-0.38 g weak buoyancy returns; direct experimental coverage is thin.",
+    "why": [
+      "LUCI and FM2 target lunar gravity precisely because PSI holds almost no partial-g fire data.",
+      "ACME E-FIELD used electric body forces as a partial-gravity analog for flames."
+    ],
+    "actions": [
+      "Treat partial-g predictions as interpolation between 0 g and 1 g bounds.",
+      "Add margin on suppression sizing until FM2/LUCI data lands."
+    ],
+    "sources": [
+      "fm2",
+      "luci",
+      "psi-22"
+    ],
+    "when": {
+      "gravity": [
+        "lunar"
+      ]
+    }
+  },
+  {
+    "id": "polymer-enriched",
+    "level": "caution",
+    "title": "Polymer surfaces at elevated O2",
+    "short": "PMMA-class polymers burn vigorously once the O2 fraction clears their limit.",
+    "why": [
+      "PMMA is the reference solid in BASS/BASS-II: burn rate and flame strength grow with O2 and flow."
+    ],
+    "actions": [
+      "Keep polymer panels clear of ignition sources above 25 % O2.",
+      "Consider PEEK/polyimide substitutions in enriched zones."
+    ],
+    "sources": [
+      "psi-25",
+      "psi-26"
+    ],
+    "when": {
+      "material": [
+        "pmma",
+        "pe"
+      ],
+      "o2_min": 25.0
+    }
+  },
+  {
+    "id": "battery-runaway",
+    "level": "danger",
+    "title": "Li-ion thermal runaway",
+    "short": "battery runaway self-heats, vents toxic CO/CO2 and can reignite for hours.",
+    "why": [
+      "Runaway is self-sustained: it does not need cabin O2 to keep heating.",
+      "Vented gases are flammable and toxic in a sealed volume."
+    ],
+    "actions": [
+      "Isolate pack electrically; cool continuously; never open containment early.",
+      "Track CO/CO2 until readings stay flat."
+    ],
+    "sources": [
+      "glenn",
+      "psi-101"
+    ],
+    "when": {
+      "ignition": [
+        "battery"
+      ]
+    }
+  },
+  {
+    "id": "electrical-ignition",
+    "level": "caution",
+    "title": "Electrical fault as ignition source",
+    "short": "overheated wiring or arcing is the dominant credible ignition path in spacecraft.",
+    "why": [
+      "SAME/SAME-R characterized the smoke that overheated spacecraft materials emit, to tune detectors to this exact scenario."
+    ],
+    "actions": [
+      "De-energize the affected circuit before suppression (Class C).",
+      "Inspect harness insulation after any overcurrent event."
+    ],
+    "sources": [
+      "psi-101",
+      "psi-102"
+    ],
+    "when": {
+      "ignition": [
+        "electrical"
+      ]
+    }
+  },
+  {
+    "id": "suppression-diluent",
+    "level": "info",
+    "title": "Diluent suppression behaves differently in micro-g",
+    "short": "CO2/He effectiveness measured on FLEX droplets does not map 1:1 from ground data.",
+    "why": [
+      "FLEX ran ~274 droplet tests with CO2 and He diluents: transport, not chemistry, controls suppression in micro-g."
+    ],
+    "actions": [
+      "Size suppressant quantity with micro-g data, not terrestrial design curves.",
+      "After discharge, hold ventilation off to avoid re-feeding the fire."
+    ],
+    "sources": [
+      "psi-69",
+      "psi-68"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "topic": [
+        "extinguisher"
+      ]
+    }
+  },
+  {
+    "id": "cool-flames",
+    "level": "caution",
+    "title": "Cool flames - burning can continue invisibly",
+    "short": "after visible extinction, low-temperature chemistry can keep consuming fuel.",
+    "why": [
+      "FLEX discovered large heptane droplets kept vaporizing and reacting after the visible flame died.",
+      "CFI and CFI-G mapped the same cool-flame regime for droplets and gaseous flames."
+    ],
+    "actions": [
+      "Verify extinction with temperature/CO sensors, not eyesight.",
+      "Keep the suppressed zone isolated until readings decay."
+    ],
+    "sources": [
+      "psi-69",
+      "psi-39",
+      "psi-159"
+    ],
+    "when": {
+      "gravity": [
+        "micro"
+      ],
+      "topic": [
+        "flame"
+      ]
+    }
+  },
+  {
+    "id": "smoke-detection",
+    "level": "info",
+    "title": "Smoke behavior and detection in micro-g",
+    "short": "particle size and transport differ in micro-g; detectors must be tuned for it.",
+    "why": [
+      "SAME/SAME-R measured spacecraft-material smoke properties in orbit; DAFT tested detection against dust backgrounds."
+    ],
+    "actions": [
+      "Favor aspirated/duct-sampling detectors over ceiling logic.",
+      "Alarm on CO/CO2 rate-of-rise as the primary cue."
+    ],
+    "sources": [
+      "psi-101",
+      "psi-102",
+      "psi-47"
+    ],
+    "when": {
+      "topic": [
+        "smoke",
+        "gas"
+      ]
+    }
+  },
+  {
+    "id": "fabric-enriched",
+    "level": "danger",
+    "title": "Fabric + enriched O2: fast spread",
+    "short": "cotton-blend fabric in >=30 % O2 is a rapid-spread scenario.",
+    "why": [
+      "Saffire burned large fabric sheets to measure spread at scale; enrichment accelerates exactly this geometry."
+    ],
+    "actions": [
+      "Remove or bag cotton-blend items during enriched-O2 operations.",
+      "Pre-stage suppression at fabric storage."
+    ],
+    "sources": [
+      "psi-99",
+      "fm2"
+    ],
+    "when": {
+      "material": [
+        "fabric"
+      ],
+      "o2_min": 30.0
+    }
+  },
+  {
+    "id": "earth-baseline",
+    "level": "info",
+    "title": "1-g baseline: buoyant upward spread",
+    "short": "on the ground, upward spread over a vertical sample is the severe reference case.",
+    "why": [
+      "The 1-g upward test anchors NASA-STD-6001 material screening; orbit data are compared against it."
+    ],
+    "actions": [
+      "Use ground results as the comparison baseline, not as orbit margins."
+    ],
+    "sources": [
+      "glenn",
+      "psi-repo"
+    ],
+    "when": {
+      "gravity": [
+        "earth"
+      ],
+      "topic": [
+        "fire",
+        "standard"
+      ]
+    }
+  }
+]

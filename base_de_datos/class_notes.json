@@ -1,0 +1,6 @@
+{
+  "A": "Class A (solids): after knockdown, cool the char - deep smolder can re-ignite when airflow returns.",
+  "B": "Class B (liquids/gases): shut off the fuel feed before suppressing.",
+  "C": "Class C (electrical): de-energize before applying any agent; assume re-arc risk.",
+  "battery": "Battery: runaway is self-heating - cool continuously and expect reignition for hours; never open containment early."
+}

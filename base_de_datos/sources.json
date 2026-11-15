@@ -1,0 +1,150 @@
+{
+  "glenn": {
+    "name": "NASA GRC ISS Combustion Research",
+    "url": "https://www1.grc.nasa.gov/space/iss-research/"
+  },
+  "fm2": {
+    "name": "NASA FM2 - Flammability of Materials on the Moon",
+    "url": "https://www1.grc.nasa.gov/space/iss-research/"
+  },
+  "luci": {
+    "name": "LUCI - Lunar Combustion Investigation",
+    "url": "https://www1.grc.nasa.gov/space/iss-research/"
+  },
+  "flare2021": {
+    "name": "JAXA FLARE - Flammability Limits At Reduced-g",
+    "url": "https://humans-in-space.jaxa.jp/en/"
+  },
+  "saffire45": {
+    "name": "NASA Saffire IV-V - Spacecraft Fire Safety",
+    "url": "https://www1.grc.nasa.gov/space/scm/saffire/"
+  },
+  "saffire6": {
+    "name": "NASA Saffire VI - Spacecraft Fire Safety",
+    "url": "https://www1.grc.nasa.gov/space/scm/saffire/"
+  },
+  "psi-repo": {
+    "name": "NASA Physical Sciences Informatics repository",
+    "url": "https://psi.nasa.gov/physci/repo"
+  },
+  "psi-10": {
+    "name": "PSI-10 · ACME/Flame Design",
+    "url": "https://doi.org/10.60555/w4zy-bt45",
+    "doi": "10.60555/w4zy-bt45"
+  },
+  "psi-20": {
+    "name": "PSI-20 · ACME BRE",
+    "url": "https://doi.org/10.60555/vb93-3y72",
+    "doi": "10.60555/vb93-3y72"
+  },
+  "psi-21": {
+    "name": "PSI-21 · ACME CLD Flame",
+    "url": "https://doi.org/10.60555/23e1-9950",
+    "doi": "10.60555/23e1-9950"
+  },
+  "psi-22": {
+    "name": "PSI-22 · ACME E-FIELD Flames",
+    "url": "https://doi.org/10.60555/se5a-8c73",
+    "doi": "10.60555/se5a-8c73"
+  },
+  "psi-23": {
+    "name": "PSI-23 · ACME s-Flame",
+    "url": "https://doi.org/10.60555/k57n-p030",
+    "doi": "10.60555/k57n-p030"
+  },
+  "psi-25": {
+    "name": "PSI-25 · BASS-II",
+    "url": "https://doi.org/10.60555/4qc4-de67",
+    "doi": "10.60555/4qc4-de67"
+  },
+  "psi-26": {
+    "name": "PSI-26 · BASS",
+    "url": "https://doi.org/10.60555/58h4-dy80",
+    "doi": "10.60555/58h4-dy80"
+  },
+  "psi-39": {
+    "name": "PSI-39 · CFI",
+    "url": "https://doi.org/10.60555/m6pj-a914",
+    "doi": "10.60555/m6pj-a914"
+  },
+  "psi-47": {
+    "name": "PSI-47 · DAFT / DAFT-2",
+    "url": "https://doi.org/10.60555/ztgj-d202",
+    "doi": "10.60555/ztgj-d202"
+  },
+  "psi-60": {
+    "name": "PSI-60 · Computational and Experimental Analysis of SPIC…",
+    "url": "https://doi.org/10.60555/mzjm-yv57",
+    "doi": "10.60555/mzjm-yv57"
+  },
+  "psi-62": {
+    "name": "PSI-62 · Concurrent Flame Spread Modeling using Flamelet…",
+    "url": "https://doi.org/10.60555/e9xp-ex83",
+    "doi": "10.60555/e9xp-ex83"
+  },
+  "psi-68": {
+    "name": "PSI-68 · FLEX-2",
+    "url": "https://doi.org/10.60555/byp8-h018",
+    "doi": "10.60555/byp8-h018"
+  },
+  "psi-69": {
+    "name": "PSI-69 · FLEX",
+    "url": "https://doi.org/10.60555/mbq8-0451",
+    "doi": "10.60555/mbq8-0451"
+  },
+  "psi-98": {
+    "name": "PSI-98 · SAFFIRE-I",
+    "url": "https://doi.org/10.60555/0t15-1z43",
+    "doi": "10.60555/0t15-1z43"
+  },
+  "psi-99": {
+    "name": "PSI-99 · SAFFIRE-II",
+    "url": "https://doi.org/10.60555/2chp-m469",
+    "doi": "10.60555/2chp-m469"
+  },
+  "psi-100": {
+    "name": "PSI-100 · SAFFIRE-III",
+    "url": "https://doi.org/10.60555/040q-4h36",
+    "doi": "10.60555/040q-4h36"
+  },
+  "psi-101": {
+    "name": "PSI-101 · SAME-R",
+    "url": "https://doi.org/10.60555/2np7-jv14",
+    "doi": "10.60555/2np7-jv14"
+  },
+  "psi-102": {
+    "name": "PSI-102 · SAME",
+    "url": "https://doi.org/10.60555/gd4k-8h62",
+    "doi": "10.60555/gd4k-8h62"
+  },
+  "psi-106": {
+    "name": "PSI-106 · SLICE",
+    "url": "https://doi.org/10.60555/pm12-rg61",
+    "doi": "10.60555/pm12-rg61"
+  },
+  "psi-107": {
+    "name": "PSI-107 · SPICE",
+    "url": "https://doi.org/10.60555/9kbh-e962",
+    "doi": "10.60555/9kbh-e962"
+  },
+  "psi-115": {
+    "name": "PSI-115 · Utilization of the Smoke Aerosol Measurement Ex…",
+    "url": "https://doi.org/10.60555/q0v5-1v28",
+    "doi": "10.60555/q0v5-1v28"
+  },
+  "psi-117": {
+    "name": "PSI-117 · Effect of External Thermo-Convective Perturbati…",
+    "url": "https://doi.org/10.60555/gz0q-b577",
+    "doi": "10.60555/gz0q-b577"
+  },
+  "psi-142": {
+    "name": "PSI-142 · Quantitative Studies of Cool Flame Transitions…",
+    "url": "https://doi.org/10.60555/80qf-vj95",
+    "doi": "10.60555/80qf-vj95"
+  },
+  "psi-159": {
+    "name": "PSI-159 · ACME CFI-G",
+    "url": "https://doi.org/10.60555/cyt1-kh64",
+    "doi": "10.60555/cyt1-kh64"
+  }
+}

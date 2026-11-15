@@ -1,0 +1,10 @@
+google-genai>=1.50
+numpy
+pandas
+openpyxl          # tablas .xlsx
+xlrd              # tablas .xls
+pypdf
+python-dotenv
+fastapi
+uvicorn[standard]
+sounddevice       # solo para prueba_terminal.py

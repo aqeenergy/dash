@@ -1,0 +1,15 @@
+<section id="ia-chat" class="ia-chat" aria-label="Conversation with the AI">
+  <div class="ia-bar">
+    <span id="ia-estado" class="ia-estado" data-estado="desconectada"><i aria-hidden="true"></i><span id="ia-estado-txt">AI not connected</span></span>
+    <span id="ia-modo" class="ia-modo" hidden>Simulated mode · no Gemini</span>
+    <div class="ia-bar-acciones">
+      <button id="ia-silencio" class="ia-mini" type="button" aria-pressed="false" title="Mute the AI voice (text only)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="ia-onda" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="ia-tachado" d="M16 9l6 6M22 9l-6 6"/></svg>
+        <span id="ia-silencio-txt">Voice on</span>
+      </button>
+      <button id="ia-reconectar" class="ia-mini" type="button" hidden>Reconnect</button>
+      <button id="ia-limpiar" class="ia-mini" type="button" hidden>New conversation</button>
+    </div>
+  </div>
+  <div id="ia-mensajes" class="ia-mensajes" aria-live="polite"></div>
+</section>

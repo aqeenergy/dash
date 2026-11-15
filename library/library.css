@@ -1,0 +1,59 @@
+/* Database library (Bubble 1 · SORT → Database library) */
+.lib { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; margin-top: 6px; text-align: left; font-family: var(--font-ui); }
+.lib[hidden] { display: none; }
+@media (max-width: 860px) { .lib { grid-template-columns: 1fr; } }
+.lib-list { background: #101216; border: 1px solid #1A1D23; border-radius: 12px; padding: 8px; max-height: 640px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3A3F48 transparent; }
+.lib-group { margin-bottom: 6px; }
+.lib-group-h { font: 600 12px var(--font-ui); color: #BCD6EE; padding: 8px 8px 4px; letter-spacing: .02em; }
+.lib-group-h span { color: #8A909A; font-weight: 400; }
+.lib-item {
+  all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; width: 100%; cursor: pointer;
+  padding: 7px 9px; border-radius: 8px; border: 1px solid transparent;
+  transition: background var(--dur-fast) var(--ease-smooth), border-color var(--dur-fast) var(--ease-smooth);
+}
+.lib-item b { font: 500 13px var(--font-ui); color: #F4F3EF; }
+.lib-item small { font: 400 11.5px var(--font-ui); color: #8A909A; overflow-wrap: anywhere; }
+.lib-item:hover { background: rgba(26, 29, 35, .8); }
+.lib-item[aria-current="true"] { background: rgba(18, 48, 110, .5); border-color: #2F63B0; }
+.lib-item:focus-visible { outline: 2px solid #6FA3D8; outline-offset: 1px; }
+.lib-empty { color: #8A909A; font-size: 13px; padding: 12px; }
+
+.lib-view { background: #101216; border: 1px solid #1A1D23; border-radius: 12px; min-height: 420px; display: flex; flex-direction: column; min-width: 0; }
+.lib-view-h { padding: 14px 16px 12px; border-bottom: 1px solid #1A1D23; }
+.lib-view-h h4 { font: 650 18px/1.25 var(--font-ui); color: #F4F3EF; margin: 0 0 4px; text-wrap: balance; }
+.lib-path { font: 400 12px var(--font-ui); color: #8A909A; overflow-wrap: anywhere; }
+.lib-path code { color: #D9D8D3; font-family: var(--font-data); }
+.lib-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lib-tag { font: 600 10.5px var(--font-ui); letter-spacing: .04em; text-transform: uppercase; color: #BCD6EE; background: rgba(111, 163, 216, .14); padding: 2px 8px; border-radius: 999px; }
+.lib-tag.hl { color: #FFC27A; background: rgba(255, 138, 42, .16); }
+.lib-body { padding: 14px 16px 16px; overflow: auto; max-height: 560px; scrollbar-width: thin; scrollbar-color: #3A3F48 transparent; }
+.lib-hint { color: #8A909A; font-size: 14px; padding: 40px 16px; text-align: center; }
+
+/* Tables */
+.lib-table { border-collapse: collapse; font: 400 12.5px var(--font-ui); color: #D9D8D3; min-width: 100%; }
+.lib-table th { position: sticky; top: -14px; background: #1A1D23; color: #F4F3EF; font-weight: 600; text-align: left; padding: 7px 10px; border-bottom: 1px solid #3A3F48; white-space: nowrap; z-index: 1; }
+.lib-table td { padding: 5px 10px; border-bottom: 1px solid rgba(26, 29, 35, .9); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lib-table tr:hover td { background: rgba(26, 29, 35, .6); }
+.lib-table .lib-rn { color: #3A3F48; text-align: right; }
+.lib-table .hl { background: rgba(255, 138, 42, .12); color: #FFE2C4; }
+.lib-table th.hl { background: #5A2A0E; color: #FFC27A; }
+
+/* Records (markdown) */
+.lib-md { font: 400 14.5px/1.65 var(--font-ui); color: #C4C3BE; max-width: 78ch; }
+.lib-md h1 { font: 650 20px/1.3 var(--font-ui); color: #F4F3EF; margin: 0 0 12px; text-wrap: balance; }
+.lib-md h2 { font: 600 15.5px var(--font-ui); color: #BCD6EE; margin: 20px 0 8px; }
+.lib-md p { margin: 0 0 10px; text-wrap: pretty; }
+.lib-md ul { margin: 0 0 10px 18px; }
+.lib-md li { margin-bottom: 3px; }
+.lib-md strong { color: #F4F3EF; font-weight: 600; }
+.lib-md em { color: #8A909A; }
+.lib-md code { font-family: var(--font-data); font-size: 12.5px; color: #F4F3EF; }
+.lib-md table { border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+.lib-md th, .lib-md td { border-bottom: 1px solid #1A1D23; padding: 5px 10px 5px 0; text-align: left; vertical-align: top; }
+.lib-md th { color: #F4F3EF; font-weight: 600; }
+.lib-md mark, .lib-pre mark { background: rgba(255, 138, 42, .28); color: #FFF1E0; border-radius: 3px; padding: 0 2px; }
+.lib-pre { font: 400 13px/1.6 var(--font-data); color: #D9D8D3; white-space: pre-wrap; margin: 0; }
+
+/* Library mode hides the investigation cards (their display rules would otherwise beat [hidden]) */
+.psi-card-list[hidden], .psi-chips[hidden], .psi-count[hidden] { display: none !important; }
+@media (max-width: 860px) { .lib-list { max-height: 280px; } }

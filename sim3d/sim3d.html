@@ -1,0 +1,119 @@
+<div id="s3-root" class="s3-root">
+  <!-- LEFT: habitat + variables -->
+  <aside class="s3-panel" aria-label="Habitat and variables">
+    <section class="s3-group">
+      <h3 class="s3-h">Habitat</h3>
+      <div id="s3-habitats" class="s3-habitats" role="radiogroup" aria-label="Habitat"></div>
+    </section>
+    <section class="s3-group">
+      <h3 class="s3-h">Variables</h3>
+      <div class="s3-var">
+        <div class="s3-var-top"><label for="s3-g">Gravity</label><output id="s3-g-out"></output></div>
+        <input id="s3-g" type="range" min="0" max="1" step="0.01">
+        <button class="s3-prov" data-prov="g" type="button"></button>
+      </div>
+      <div class="s3-var">
+        <div class="s3-var-top"><label for="s3-o2">Oxygen</label><output id="s3-o2-out"></output></div>
+        <input id="s3-o2" type="range" min="15" max="100" step="0.5">
+        <button class="s3-prov" data-prov="o2" type="button"></button>
+      </div>
+      <div class="s3-var">
+        <div class="s3-var-top"><label for="s3-p">Pressure</label><output id="s3-p-out"></output></div>
+        <input id="s3-p" type="range" min="20" max="102" step="0.5">
+        <button class="s3-prov" data-prov="kpa" type="button"></button>
+      </div>
+      <div class="s3-var">
+        <div class="s3-var-top"><label for="s3-flow">Ventilation</label><output id="s3-flow-out"></output></div>
+        <input id="s3-flow" type="range" step="1">
+        <button class="s3-prov" data-prov="flow" type="button"></button>
+      </div>
+      <div class="s3-ppo2"><span>ppO₂</span><b id="s3-ppo2"></b></div>
+    </section>
+  </aside>
+
+  <!-- CENTER: 3D stage -->
+  <div class="s3-stage">
+    <div id="s3-canvas-wrap" class="s3-canvas-wrap">
+      <div id="s3-loading" class="s3-loading">Loading capsule model…</div>
+      <div class="s3-badge">Conceptual visualization · numerical airflow model, not PSI data</div>
+      <div id="s3-label-a" class="s3-vp-label s3-vp-a"></div>
+      <div id="s3-label-b" class="s3-vp-label s3-vp-b" hidden></div>
+      <div id="s3-status" class="s3-status"></div>
+      <div id="s3-legend" class="s3-legend">
+        <span id="s3-legend-title"></span>
+        <div class="s3-legend-bar"></div>
+        <div class="s3-legend-ends"><span>low</span><span>high</span></div>
+      </div>
+      <div class="s3-hint">Drag to orbit · scroll to zoom · right-drag to pan · click a zone for its data</div>
+      <article id="s3-info" class="s3-info" hidden aria-live="polite">
+        <button id="s3-info-close" class="s3-info-close" type="button" aria-label="Close data panel">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <div id="s3-info-body"></div>
+      </article>
+    </div>
+    <div class="s3-readouts">
+      <div class="s3-readout" id="s3-read-a"></div>
+      <div class="s3-readout" id="s3-read-b" hidden></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: playback, fire, layers, compare -->
+  <aside class="s3-panel" aria-label="Simulation controls">
+    <section class="s3-group">
+      <h3 class="s3-h">Playback</h3>
+      <div class="s3-row">
+        <button id="s3-play" class="s3-btn s3-btn-primary" type="button">Pause</button>
+        <button id="s3-reset" class="s3-btn" type="button">Restart</button>
+      </div>
+      <div class="s3-seg" role="group" aria-label="Speed">
+        <button class="s3-seg-btn" data-speed="0.5" type="button">0.5×</button>
+        <button class="s3-seg-btn active" data-speed="1" type="button">1×</button>
+        <button class="s3-seg-btn" data-speed="3" type="button">3×</button>
+      </div>
+      <div class="s3-time">t = <b id="s3-time">0.0</b> s</div>
+    </section>
+    <section class="s3-group">
+      <h3 class="s3-h">Ignition</h3>
+      <label class="s3-field"><span>Source location</span>
+        <select id="s3-fire-pos">
+          <option value="seat">Seat bay (low)</option>
+          <option value="center">Cabin center</option>
+          <option value="vent">Next to inlet vent</option>
+        </select>
+      </label>
+      <button id="s3-ignite" class="s3-btn s3-btn-fire" type="button">Ignite</button>
+    </section>
+    <section class="s3-group">
+      <h3 class="s3-h">Layers</h3>
+      <label class="s3-field"><span>Hull opacity <output id="s3-op-out"></output></span>
+        <input id="s3-opacity" type="range" min="0.08" max="1" step="0.02" value="1"></label>
+      <label class="s3-check"><input id="s3-cut" type="checkbox" checked> Section cut</label>
+      <label class="s3-check"><input id="s3-air" type="checkbox" checked> Air tracers</label>
+      <label class="s3-check"><input id="s3-smoke" type="checkbox" checked> Smoke tracers</label>
+      <label class="s3-check"><input id="s3-zones" type="checkbox" checked> Data zones</label>
+      <label class="s3-field"><span>Surface heat map</span>
+        <select id="s3-heat">
+          <option value="smoke">Relative smoke concentration</option>
+          <option value="o2">Relative O₂ depletion</option>
+          <option value="temp">Relative gas temperature</option>
+          <option value="off">Off</option>
+        </select>
+      </label>
+    </section>
+    <section class="s3-group">
+      <h3 class="s3-h">Compare</h3>
+      <label class="s3-check"><input id="s3-compare" type="checkbox"> Split-screen comparison</label>
+      <label class="s3-field"><span>Scenario B habitat</span>
+        <select id="s3-hab-b"></select>
+      </label>
+    </section>
+    <details class="s3-group s3-assume">
+      <summary>Model assumptions</summary>
+      <p>Airflow: incompressible stable-fluids solver (semi-Lagrangian advection + Jacobi pressure projection) on a ~0.14 m grid bounded by your capsule's CAD profile.</p>
+      <p>Smoke, gas temperature and O₂ depletion are passive scalars with explicit diffusion. Buoyancy acceleration = 9.81·g·β·T with a fixed visualization gain β.</p>
+      <p>Flame intensity scales with local ppO₂ / 21.3 kPa and dims as the model depletes O₂ around it. Source strengths, β, diffusivity and the extinction threshold are visualization constants, <b>not PSI data</b>.</p>
+      <p>Only values tagged with a PSI accession come from <code>base_de_datos</code>.</p>
+    </details>
+  </aside>
+</div>

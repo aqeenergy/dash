@@ -1,0 +1,106 @@
+{
+  "pe": {
+    "name": "Polyethylene (PE)",
+    "loi_pct": 17.4,
+    "cls": "A",
+    "aliases": [
+      "polyethylene",
+      "pe foam",
+      "plastic bag",
+      "polymer",
+      "plastic"
+    ]
+  },
+  "pmma": {
+    "name": "PMMA (acrylic)",
+    "loi_pct": 17.3,
+    "cls": "A",
+    "aliases": [
+      "pmma",
+      "acrylic",
+      "plexiglas",
+      "perspex",
+      "acrylic window"
+    ]
+  },
+  "fabric": {
+    "name": "Cotton fabric (SIBAL blend)",
+    "loi_pct": 18.4,
+    "cls": "A",
+    "aliases": [
+      "cotton",
+      "fabric",
+      "cloth",
+      "textile",
+      "sibal",
+      "garment",
+      "clothing"
+    ]
+  },
+  "pc": {
+    "name": "Polycarbonate",
+    "loi_pct": 26.0,
+    "cls": "A",
+    "aliases": [
+      "polycarbonate",
+      "lexan"
+    ]
+  },
+  "nomex": {
+    "name": "Nomex (meta-aramid)",
+    "loi_pct": 29.0,
+    "cls": "A",
+    "aliases": [
+      "nomex",
+      "aramid",
+      "webbing",
+      "kevlar",
+      "strap",
+      "harness"
+    ]
+  },
+  "silicone": {
+    "name": "Silicone rubber",
+    "loi_pct": 30.0,
+    "cls": "A",
+    "aliases": [
+      "silicone",
+      "rubber seal",
+      "elastomer",
+      "gasket"
+    ]
+  },
+  "peek": {
+    "name": "PEEK",
+    "loi_pct": 35.0,
+    "cls": "A",
+    "aliases": [
+      "peek",
+      "polyetheretherketone"
+    ]
+  },
+  "electrical": {
+    "name": "Kapton wiring (polyimide)",
+    "loi_pct": 37.0,
+    "cls": "C",
+    "aliases": [
+      "kapton",
+      "polyimide",
+      "wire",
+      "wiring",
+      "cable",
+      "circuit",
+      "insulation"
+    ]
+  },
+  "ptfe": {
+    "name": "PTFE (Teflon)",
+    "loi_pct": 95.0,
+    "cls": "A",
+    "aliases": [
+      "ptfe",
+      "teflon",
+      "fluoropolymer"
+    ]
+  }
+}

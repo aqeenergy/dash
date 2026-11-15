@@ -1,0 +1,450 @@
+{
+ "version": 3,
+ "generated": "2026-11-14",
+ "weights": {
+  "A": 0.4,
+  "H": 0.25,
+  "E": 0.2,
+  "F": 0.15
+ },
+ "formula": "round(100 × (0.40·A + 0.25·H + 0.20·E + 0.15·F) / 3)",
+ "items": [
+  {
+   "acc": "PSI-25",
+   "acronym": "BASS-II",
+   "title": "Burning and Suppression of Solids - II",
+   "category": "Prevention",
+   "tags": [
+    "Prevention",
+    "Suppression"
+   ],
+   "summary": "Maps ignition, flame spread and extinction limits of solid materials in low ventilation flows, testing whether ground flammability screening holds in orbit.",
+   "studied": {
+    "objective": "BASS-II results contribute to the combustion computational models used in the design of fire detection and suppression systems in microgravity and on Earth. Objectives Include: 1) Study the ignition, flame growth, flame spread, and extinction limits for solid fuels burning in low-velocity forced flows in microgravity.",
+    "hypothesis": "BASS–II tests the hypothesis that materials in microgravity, with adequate ventilation, burn as well if not better than the same material in normal gravity with other conditions being identical (pressure, O2 concentration, temperature, etc.).",
+    "hardware": "Microgravity Science Glovebox (MSG)"
+   },
+   "findings": [
+    "129 test points logged; initial O2 (calibrated) 13.6–22.2 % by volume.",
+    "After burning, chamber O2 recorded 0.6–40.4 %, CO2 up to 3.22 % and CO up to 950 ppm.",
+    "Most-tested fuels: 2 cm SIBAL (17); 1/4\" clear rod (15); 1/4\" black rod (12); 1 cm SIBAL (8)."
+   ],
+   "application": "Material-selection margins that do not rely only on the 1-g upward test, and the computational fire models the record says are used to design detection and suppression systems.",
+   "impact_quote": "A primary goal of BASS-II is improved spacecraft fire safety, improved understanding of combustion in space and how to avoid it.",
+   "limitation": "The local table records gas composition before and after each test, not flame-spread rates; flow is logged as fan and restrictor settings, not cm/s. One final-O2 value (40.4 %) exceeds every initial value and should be checked against the source.",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/4qc4-de67",
+    "doi_url": "https://doi.org/10.60555/4qc4-de67",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-25"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-25",
+    "record_file": "PSI-25.json",
+    "record_lib": "PSI-25.md",
+    "table_file": "PSI-25_Experimental table_BASS-II.csv",
+    "table_lib": "PSI-25_Experimental_table_BASS-II.csv",
+    "table_rows": 129,
+    "publications": 17
+   },
+   "history": [
+    {
+     "event": "Apollo 1 (1967)",
+     "link": "Thematic link",
+     "text": "A cabin fire during a ground test killed three astronauts. NASA then reworked spacecraft materials selection and introduced systematic flammability testing, the lineage of today's upward-burning screening test (NASA-STD-6001 Test 1). BASS-II tests whether that 1-g screening is conservative in microgravity (per its PSI record)."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Record: helps select the safest materials and improve firefighting methods.",
+     "editorial": true
+    },
+    "H": {
+     "score": 3,
+     "why": "Microgravity, low-speed forced ventilation, cabin-like O2 (13.6–22.2 %).",
+     "editorial": true
+    },
+    "E": {
+     "score": 3,
+     "why": "+1 DOI in local record; +1 measured values in 127 rows of PSI-25_Experimental table_BASS-II.csv; +1 17 publications listed.",
+     "editorial": false
+    },
+    "F": {
+     "score": 3,
+     "why": "Record: results feed combustion models used to design detection and suppression systems; informs SoFIE.",
+     "editorial": true
+    }
+   },
+   "score": 100,
+   "rank": 1
+  },
+  {
+   "acc": "PSI-101",
+   "acronym": "SAME-R",
+   "title": "Smoke Aerosol Measurement Experiment-Reflight",
+   "category": "Detection",
+   "tags": [
+    "Detection"
+   ],
+   "summary": "Reflight measuring smoke from overheated spacecraft materials in microgravity to size particles that future spacecraft fire detectors must reliably sense.",
+   "studied": {
+    "objective": "Similar to the original SAME investigation, the primary objective of the SAME-R investigation was to quantify the sizes that the liquid smoke particulate achieves in low gravity and to relate the droplet size distribution to the smoke generation and smoke transport conditions in the experiment. One of the problems encountered during the SAME investigation was that after the thermal precipitators were returned to…",
+    "hypothesis": "The three hypotheses that motivated the original SAME investigation is also applicable for the reflight SAME-R investigation: In a μg environment, with the absence of the strong buoyancy-induced flows, smoke particle growth from a pyrolyzing/smoldering source, as a result of nucleation,…",
+    "hardware": "Comparitive Soot Diagnostic Hardware; Refer to final report"
+   },
+   "findings": [
+    "109 smoke-aging runs on 5 spacecraft materials: Kapton (29); Lampwick (20); Pyrell (20); Silicone (22); Teflon (18).",
+    "Inlet velocities used: 0, 1, 2, 8, 8.1 cm/s.",
+    "Rt/R0 as recorded: Kapton 1.38–1.48; Lampwick 1.245–1.28; Pyrell 1.22–1.23; Silicone 1.304–1.36; Teflon 1.253–1.452."
+   ],
+   "application": "Baseline reduced-gravity smoke data against which spacecraft smoke-detector technology can be evaluated, as the record states.",
+   "impact_quote": "Along with the results from the original SAME investigation, the results from SAME-R can lead to technology for an advanced fire detector for future spacecraft that will be used for long duration missions.",
+   "limitation": "The local table does not define Rt/R0 or give particle-size distributions; interpreting them needs the final report referenced by the record.",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/2np7-jv14",
+    "doi_url": "https://doi.org/10.60555/2np7-jv14",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-101"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-101",
+    "record_file": "PSI-101.json",
+    "record_lib": "PSI-101.md",
+    "table_file": "PSI-101_Experimental table_SAME-R.csv",
+    "table_lib": "PSI-101_Experimental_table_SAME-R.csv",
+    "table_rows": 109,
+    "publications": 6
+   },
+   "history": [
+    {
+     "event": "Mir (1997)",
+     "link": "Thematic link",
+     "text": "A fire in an oxygen generator filled the Mir station with smoke; it illustrates why smoke detection in microgravity matters. SAME-R is a reflight of SAME — see that card."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Record: leads to technology for an advanced spacecraft fire detector.",
+     "editorial": true
+    },
+    "H": {
+     "score": 3,
+     "why": "Smoke from real spacecraft materials (Kapton, Teflon, silicone…) in microgravity.",
+     "editorial": true
+    },
+    "E": {
+     "score": 2,
+     "why": "+1 DOI in local record; +1 measured values in 109 rows of PSI-101_Experimental table_SAME-R.csv; +0 6 publications listed (needs ≥10).",
+     "editorial": false
+    },
+    "F": {
+     "score": 3,
+     "why": "Record: provides the baseline for evaluating future detection technology.",
+     "editorial": true
+    }
+   },
+   "score": 93,
+   "rank": 2
+  },
+  {
+   "acc": "PSI-69",
+   "acronym": "FLEX",
+   "title": "Flame Extinguishment Experiment",
+   "category": "Suppression",
+   "tags": [
+    "Suppression"
+   ],
+   "summary": "Mapped flammability limits of fuel droplets in microgravity and measured how well gaseous suppressants such as CO2 and helium extinguish flames.",
+   "studied": {
+    "objective": "The FLEX (Flame Extinguishment Experiment) investigation aims to map the flammability limits of liquid fuels in microgravity environments, measure the effectiveness of various gaseous fire suppressants such as CO2, He, and SF6, and develop reliable predictive models for combustion limits under reduced gravity conditions. The mission seeks to validate and improve simplified models by incorporating detailed chemical…",
+    "hypothesis": "The primary hypothesis of the FLEX mission is that microgravity conditions fundamentally alter the combustion and extinction characteristics of liquid fuel droplets due to changes in species and energy transport dynamics, radiative heat loss, and chemical kinetics.",
+    "hardware": "Combustion Integrated Rack (CIR)-Fluids and Combustion Facility (FCF), Multi-user Droplet Combustion Appartatus (MDCA)"
+   },
+   "findings": [
+    "274 droplet tests: Methanol 157, Heptane 117.",
+    "How each test ended: Extinction 186, Disruption 61, Completion 27.",
+    "Ambient O2 mole fraction 0.12–0.34; tests with a diluent: CO2 123, He 50."
+   ],
+   "application": "Suppressant selection and concentration targets for crewed vehicles, and predictive extinction models, per the record's stated impacts.",
+   "impact_quote": "The research impacts and Earth benefits of the FLEX mission are significant and multifaceted.",
+   "limitation": "Burns isolated liquid droplets in a combustion rack, not cabin solids; burning-rate units are truncated in the table header ('Burning rate; mm').",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/mbq8-0451",
+    "doi_url": "https://doi.org/10.60555/mbq8-0451",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-69"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-69",
+    "record_file": "PSI-69.json",
+    "record_lib": "PSI-69.md",
+    "table_file": "PSI-69_Experimental table_FLEX.csv",
+    "table_lib": "PSI-69_Experimental_table_FLEX.csv",
+    "table_rows": 274,
+    "publications": 51
+   },
+   "history": [
+    {
+     "event": "Apollo 13 (1970)",
+     "link": "Thematic link",
+     "text": "Damaged wiring ignited inside an oxygen tank, which then failed. A thematic reminder of combustion in oxygen-rich systems; it is not documented as a cause of FLEX."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Objective: measure effectiveness of gaseous suppressants (CO2, He, SF6).",
+     "editorial": true
+    },
+    "H": {
+     "score": 2,
+     "why": "Microgravity and varied atmospheres, but liquid droplets rather than cabin materials.",
+     "editorial": true
+    },
+    "E": {
+     "score": 3,
+     "why": "+1 DOI in local record; +1 measured values in 269 rows of PSI-69_Experimental table_FLEX.csv; +1 51 publications listed.",
+     "editorial": false
+    },
+    "F": {
+     "score": 3,
+     "why": "Record: develops predictive models for combustion limits and suppressant efficacy.",
+     "editorial": true
+    }
+   },
+   "score": 92,
+   "rank": 3
+  },
+  {
+   "acc": "PSI-102",
+   "acronym": "SAME",
+   "title": "Smoke and Aerosol Measurement Experiment",
+   "category": "Detection",
+   "tags": [
+    "Detection"
+   ],
+   "summary": "First on-orbit study of how smoke particles grow from heated spacecraft materials without buoyancy, aimed at validating smoke-detector sensitivity.",
+   "studied": {
+    "objective": "One of the major goals of this investigation was to quantify the sizes that the liquid smoke particulate achieves in low gravity and to relate the droplet size distribution to the smoke generation and smoke transport conditions in the experiment. A numerical code was to be developed to predict the smoke droplet growth as a function of the fuel pyrolysis rate, the thermodynamic properties of the pyrolysis vapor, and…",
+    "hypothesis": "The three hypotheses that motivated this investigation: In a μg environment, with the absence of the strong buoyancy-induced flows, smoke particle growth from a pyrolyzing/smoldering source, as a result of nucleation, condensation, and coagulation, will lead to larger particles compared to those…",
+    "hardware": "Comparitive Soot Diagnostic Hardware"
+   },
+   "findings": [
+    "4 of 8 rows carry measured values, all for Teflon: air flow 5, 10 cm/s, weight-loss rate 1–2 mg/min.",
+    "Other materials are listed as run under the same conditions without values: Kapton, Silicone Rubber, Lampwick, Dibutyl Phthalate."
+   ],
+   "application": "Quantitative data on detector sensitivity to reduced-gravity smokes for the Fire Prevention, Detection and Suppression programme, per the record.",
+   "impact_quote": "The SAME experiment will provide technology for an advanced fire detector for future spacecraft that will be used for long duration missions.",
+   "limitation": "Only 4 of 8 local rows carry values (Teflon); the SAME-R record notes the original SAME particle-collection grids came back contaminated and largely unusable.",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/gd4k-8h62",
+    "doi_url": "https://doi.org/10.60555/gd4k-8h62",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-102"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-102",
+    "record_file": "PSI-102.json",
+    "record_lib": "PSI-102.md",
+    "table_file": "PSI-102_Experimental table_SAME.csv",
+    "table_lib": "PSI-102_Experimental_table_SAME.csv",
+    "table_rows": 8,
+    "publications": 16
+   },
+   "history": [
+    {
+     "event": "Mir (1997)",
+     "link": "Thematic link",
+     "text": "A fire in an oxygen generator filled the Mir station with smoke. It is a later thematic parallel to SAME's detection goal, not a documented cause of the experiment."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Record: evaluates the adequacy of smoke-detection technology.",
+     "editorial": true
+    },
+    "H": {
+     "score": 3,
+     "why": "Pyrolysis smoke from spacecraft materials in microgravity.",
+     "editorial": true
+    },
+    "E": {
+     "score": 2,
+     "why": "+1 DOI in local record; +0 measured values in only 4 rows (needs ≥10); +1 16 publications listed.",
+     "editorial": false
+    },
+    "F": {
+     "score": 2,
+     "why": "Valuable baseline, but its particle samples were compromised and a reflight (SAME-R) was required.",
+     "editorial": true
+    }
+   },
+   "score": 88,
+   "rank": 4
+  },
+  {
+   "acc": "PSI-26",
+   "acronym": "BASS",
+   "title": "Burning and Suppression of Solids",
+   "category": "Suppression",
+   "tags": [
+    "Suppression",
+    "Prevention"
+   ],
+   "summary": "Burned realistic solid fuels in orbit and tested an ISS-like inert gaseous extinguishing agent, comparing behaviour against the standard ground flammability test.",
+   "studied": {
+    "objective": "The two main objectives for BASS are to: 1.) Begin to bridge the gap between the normal gravity NASA-STD-6001 Test#1 method, ground-based microgravity tests, and actual material flammability in microgravity. The relation between these can be investigated by observing flames burning for the longer times available in flight.",
+    "hypothesis": "BASS experiments were based on the hypothesis that materials in microgravity, with adequate ventilation, burn as well if not better than the same material in normal gravity with other conditions being identical (pressure, oxygen concentration, temperature, etc.) To test this hypothesis with any…",
+    "hardware": "Microgravity Science Glovebox"
+   },
+   "findings": [
+    "122 as-run tests logged in the local table (date, test number, sample, fuel).",
+    "Most-tested fuels: 2 cm sphere (18); PMMA sphere 2 cm (10); SIBAL 2 cm (9); PMMA 2 cm (8); Japan Wax Candle wake (8).",
+    "The local table carries no measured flame quantities: results are reported in the record's publications."
+   ],
+   "application": "Evidence for inert-gas (nitrogen) extinguishment in microgravity and for extending heat-release data to performance-based material selection, as described in the record.",
+   "impact_quote": "Current NASA spacecraft materials selection is based on a standard test method (NASA–STD–6001 Test 1) that segregates material based on 1-g behavior without consideration of low gravity effects.",
+   "limitation": "The local table is an as-run log (date, sample, fuel) with no measured flame data; quantitative results live in the record's publications, not in base_de_datos.",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/58h4-dy80",
+    "doi_url": "https://doi.org/10.60555/58h4-dy80",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-26"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-26",
+    "record_file": "PSI-26.json",
+    "record_lib": "PSI-26.md",
+    "table_file": "PSI-26_Experimental table_BASS.csv",
+    "table_lib": "PSI-26_Experimental_table_BASS.csv",
+    "table_rows": 122,
+    "publications": 10
+   },
+   "history": [
+    {
+     "event": "Apollo 1 (1967)",
+     "link": "Direct historical consequence",
+     "text": "A cabin fire during a ground test killed three astronauts. NASA then reworked spacecraft materials selection and introduced systematic flammability testing, the lineage of today's upward-burning screening test (NASA-STD-6001 Test 1). BASS's first objective is explicitly to bridge that NASA-STD-6001 Test 1 method and real flammability in microgravity (per its PSI record)."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Objective 2: effectiveness of an ISS-like inert gaseous extinguishing agent.",
+     "editorial": true
+    },
+    "H": {
+     "score": 3,
+     "why": "Spacecraft-relevant solid fuels burned in the ISS Microgravity Science Glovebox.",
+     "editorial": true
+    },
+    "E": {
+     "score": 2,
+     "why": "+1 DOI in local record; +0 measured values in only 0 rows (needs ≥10); +1 10 publications listed.",
+     "editorial": false
+    },
+    "F": {
+     "score": 2,
+     "why": "Record: data used in first-order heat-release models; nitrogen suppression links to current techniques.",
+     "editorial": true
+    }
+   },
+   "score": 88,
+   "rank": 5
+  },
+  {
+   "acc": "PSI-99",
+   "acronym": "SAFFIRE-II",
+   "title": "Spacecraft Fire Experiment-II",
+   "category": "Prevention",
+   "tags": [
+    "Prevention",
+    "Detection"
+   ],
+   "summary": "Burned large spacecraft material samples inside an uncrewed Cygnus vehicle to compare low-gravity flammability limits with NASA's ground screening test.",
+   "studied": {
+    "objective": "The objectives of SAFFIRE-II are to determine how rapidly a large scale fire grows in low-gravity and to investigate the low-g flammability limits compared to those obtained in NASA’s normal gravity material flammability screening test.",
+    "hypothesis": "This investigation hypothesizes that due to large differences between fire behavior in normal and reduced gravity, the use of terrestrial fires and fire standards to design spacecraft fire safety systems presents an inherent risk to the vehicle because of the significant level of uncertainty.",
+    "hardware": "Cygnus Pressurized Cargo Module, SAFFIRE"
+   },
+   "findings": [
+    "9 samples at 20 cm/s (concurrent 8, opposed 1); O2 21.5–22.1 % (derived from CO2, table note 1).",
+    "Sample 2-1 · Silicone: burn time Insignificant, µg burn length ~ 0.",
+    "Sample 2-2 · Silicone: burn time Insignificant, µg burn length ~ 0.",
+    "Sample 2-3 · Silicone: burn time Insignificant, µg burn length ~ 0.",
+    "Sample 2-4 · Silicone: burn time Insignificant, µg burn length ~ 0.",
+    "Sample 2-5 · Cotton-Fiberglass (SIBAL): burn time 145 s, µg burn length 29 cm.",
+    "Sample 2-6 · material not stated in the table: burn time 115 s, µg burn length 29 cm.",
+    "Sample 2-7 · PMMA & Nomex: burn time 140 s, µg burn length 5 cm & 0 (note 2).",
+    "Sample 2-8 · PMMA: burn time 600 s, µg burn length ~ 10 cm (note 3).",
+    "Sample 2-9 · material not stated in the table: burn time 900 s, µg burn length ~ 10 cm (note 4).",
+    "Table note (sample 2-7): The PMMA portion was completely consumed but the Nomex was not ignited.",
+    "Table note (sample 2-9): The flames remain anchored at the base of the sample which has a very slow regression rate (0.01 to 0.04 mm/s)"
+   ],
+   "application": "Validation of NASA's material-selection criteria at spacecraft scale, and data on how microgravity and limited oxygen affect flame size, as stated in the record.",
+   "impact_quote": "The Saffire-II experiment provides a new way to study a realistic fire on an exploration vehicle, which has not been possible in the past because the risks are too high.",
+   "limitation": "Burn times and lengths are partly qualitative ('Insignificant', '~ 10 cm'); oxygen values are derived from CO2 production (table note 1).",
+   "source": {
+    "record_available": true,
+    "doi": "10.60555/2chp-m469",
+    "doi_url": "https://doi.org/10.60555/2chp-m469",
+    "doi_check": {
+     "ok": true,
+     "checked": "2026-11-14",
+     "target": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-99"
+    },
+    "psi_url": "https://psi.nasa.gov/physci/repo/data/investigations/PSI-99",
+    "record_file": "PSI-99.json",
+    "record_lib": "PSI-99.md",
+    "table_file": "PSI-99_Experimental table_SAFFIRE-2.csv",
+    "table_lib": "PSI-99_Experimental_table_SAFFIRE-2.csv",
+    "table_rows": 15,
+    "publications": 7
+   },
+   "history": [
+    {
+     "event": "Apollo 1 (1967)",
+     "link": "Thematic link",
+     "text": "A cabin fire during a ground test killed three astronauts. NASA then reworked spacecraft materials selection and introduced systematic flammability testing, the lineage of today's upward-burning screening test (NASA-STD-6001 Test 1). Saffire compares low-g limits with that normal-gravity screening test."
+    }
+   ],
+   "criteria": {
+    "A": {
+     "score": 3,
+     "why": "Record: determines microgravity flammability limits and validates material selection.",
+     "editorial": true
+    },
+    "H": {
+     "score": 3,
+     "why": "Spacecraft-scale fire in a real cargo-vehicle cabin with forced flow.",
+     "editorial": true
+    },
+    "E": {
+     "score": 1,
+     "why": "+1 DOI in local record; +0 measured values in only 9 rows (needs ≥10); +0 7 publications listed (needs ≥10).",
+     "editorial": false
+    },
+    "F": {
+     "score": 3,
+     "why": "Record: informs material selection and future spacecraft fire-safety design.",
+     "editorial": true
+    }
+   },
+   "score": 87,
+   "rank": 6
+  }
+ ]
+}

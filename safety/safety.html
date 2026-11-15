@@ -1,0 +1,24 @@
+<div id="sm-root" class="sm-root">
+  <div class="sm-intro">
+    <p class="sm-sub">Research that protects lives</p>
+    <p class="sm-lead">Six NASA PSI investigations, ranked by how directly they help prevent, detect or put out a fire aboard a crewed vehicle.</p>
+  </div>
+  <div class="sm-toolbar">
+    <div class="sm-chips" role="tablist" aria-label="Filter by safety mechanism">
+      <button class="sm-chip" role="tab" aria-selected="true" data-cat="All" type="button">All</button>
+      <button class="sm-chip" role="tab" aria-selected="false" data-cat="Prevention" type="button">Prevention</button>
+      <button class="sm-chip" role="tab" aria-selected="false" data-cat="Detection" type="button">Detection</button>
+      <button class="sm-chip" role="tab" aria-selected="false" data-cat="Suppression" type="button">Suppression</button>
+    </div>
+    <button id="sm-how-btn" class="sm-how" type="button" aria-expanded="false" aria-controls="sm-how">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 16.9v.2"/></svg>
+      How is the FLAMA Score calculated?
+    </button>
+  </div>
+  <section id="sm-how" class="sm-how-panel" hidden aria-label="How the FLAMA Score is calculated"></section>
+  <div id="sm-layout" class="sm-layout">
+    <div id="sm-grid" class="sm-grid" aria-live="polite"></div>
+    <aside id="sm-detail" class="sm-detail" hidden aria-label="Research detail"></aside>
+  </div>
+  <p class="sm-foot">FLAMA Score is this project's own reproducible ranking, not a NASA rating. Measured values are computed from <code>base_de_datos</code>; text marked “FLAMA assessment” is our interpretation.</p>
+</div>

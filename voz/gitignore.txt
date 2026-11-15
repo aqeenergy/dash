@@ -1,0 +1,11 @@
+# Secretos: NUNCA subir la clave de API
+.env
+.env.*
+!.env.ejemplo
+__pycache__/
+
+# Conversaciones grabadas (audio y transcripciones: no subir)
+grabaciones/
+
+# Audio de prueba_rapida.py
+respuesta.wav

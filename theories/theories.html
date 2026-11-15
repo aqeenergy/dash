@@ -1,0 +1,21 @@
+<div id="tl-root" class="tl-root">
+  <div class="tl-top">
+    <div class="tl-searchcol">
+      <p class="tl-sub">Hidden patterns across the whole PSI archive</p>
+      <p class="tl-lead">The AI cross-reads every Physical Sciences Informatics investigation, keeps only hypotheses backed by at least 10 independent investigations, and proposes the microgravity experiment that would confirm each one.</p>
+      <form id="tl-form" class="tl-search" role="search">
+        <input id="tl-q" type="search" placeholder="Filter or ask for a topic — soot, droplets, convection…" autocomplete="off" aria-label="Filter theories or ask the AI about a topic">
+        <button id="tl-ask" class="tl-askbtn" type="submit">Ask the AI</button>
+      </form>
+      <div id="tl-status" class="tl-status" aria-live="polite"></div>
+    </div>
+    <aside id="tl-highlights" class="tl-highlights" aria-label="Highest-consensus theories and recommended experiments"></aside>
+  </div>
+  <div class="tl-listhead">
+    <h3 id="tl-listtitle" class="tl-h">Top 10 theories</h3>
+    <button id="tl-how" class="tl-howbtn" type="button" aria-expanded="false" aria-controls="tl-howpanel">How are theories filtered and scored?</button>
+  </div>
+  <section id="tl-howpanel" class="tl-howpanel" hidden></section>
+  <div id="tl-list" class="tl-list"></div>
+  <p class="tl-foot">AI-generated hypotheses to be confirmed. Every supporting or contradicting entry quotes its PSI document verbatim, and each quote was checked against <code>base_de_datos</code>; the probability is an evidence balance, not a measured statistic.</p>
+</div>

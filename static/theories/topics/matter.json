@@ -1,0 +1,585 @@
+{
+ "generated": "2026-11-14",
+ "model": "gemini-3.5-flash-lite",
+ "topic": "matter",
+ "corpus": {
+  "investigations": 133,
+  "areas": [
+   "Biophysics",
+   "Combustion Science",
+   "Complex Fluids - Soft Matter",
+   "Fluid Physics",
+   "Fundamental Physics",
+   "Materials Science"
+  ]
+ },
+ "rules": {
+  "min_support": 10,
+  "probability": "(S + 1) / (S + C + 2); S = verified supporting investigations, C = contradicting + 0.5 × qualifying",
+  "verification": "every quote must appear verbatim in its PSI document"
+ },
+ "stats": {
+  "candidates": 8,
+  "verified": 8,
+  "kept": 2,
+  "discarded_low_support": 6,
+  "quotes_rejected": 1,
+  "seconds": 30
+ },
+ "theories": [
+  {
+   "title": "Diffusion-Controlled Coarsening and Phase Ordering in Complex Colloidal Gels",
+   "hypothesis": "In the absence of buoyancy-driven convection and sedimentation, the coarsening kinetics and structural aging of colloidal gels are dictated entirely by multiparticle diffusion and tunable interparticle interactions, such as critical Casimir forces or depletion attractions. Without gravitational collapse, structural compaction proceeds via a universal scaling law where thermal fluctuations diminish over time as the gel network reorganizes. Polydispersity and non-spherical particle geometry introduce structural frustration that alters the local diffusion coefficients and delays macroscopic collapse. This unified transport mechanism governs both solid-liquid phase separation in metallic alloys and the aging dynamics of soft colloidal networks.",
+   "summary": "Diffusion-dominated aging and topological coarsening in colloidal and solid-liquid mixtures follow universal scaling laws free from sedimentation.",
+   "tags": [
+    "colloids",
+    "coarsening",
+    "diffusion",
+    "gels",
+    "phase separation"
+   ],
+   "experiment": {
+    "title": "Polydisperse Gel Coarsening under Tunable Depletion Interactions",
+    "design": "Suspend binary mixtures of hard spheres and non-adsorbing polymers in a thermal-control microscopy cell. Expose the sample to controlled thermal quenches to induce depletion-mediated aggregation, and image the 3D spatial evolution using confocal microscopy over extended temporal durations.",
+    "variables": [
+     "polymer concentration",
+     "particle polydispersity",
+     "quench depth",
+     "thermal gradient"
+    ],
+    "measurements": [
+     "average cluster radius",
+     "fractal dimension",
+     "structure factor via light scattering",
+     "elastic modulus"
+    ],
+    "platform": "ISS Advanced Colloids Experiment rack"
+   },
+   "support": [
+    {
+     "acc": "PSI-13",
+     "title": "Advanced Colloids Experiment- Microscopy",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "The study of microscopic colloidal mixtures confirms that particle polydispersity dramatically alters gel collapse timescales.",
+     "quote": "Previous Earth-based experiments show that polydispersity dramatically affects the time it takes for these gels to collapse.",
+     "lib": "PSI-13.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-17",
+     "title": "Advanced Colloids Experiment - Temperature 6",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Investigation into colloidal mixtures highlights the role of polydispersity in dictating the time scales of gel collapse.",
+     "quote": "It is hypothesized that polydispersity in the polymer makes order-of-magnitude differences in the time scale of collapse of weak gels.",
+     "lib": "PSI-17.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-27",
+     "title": "Binary Colloidal Alloy Test - 3",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Using polymers to induce depletion attractions drives complex phase behavior in colloidal alloy systems.",
+     "quote": "addition of the polymer induces weak attractive interactions between the colloidal particles by the depletion mechanism, leading to a rich phase behavior for the colloidal particles.",
+     "lib": "PSI-27.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-28",
+     "title": "Binodal Colloidal Aggregation Test - 4",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Model hard-sphere suspensions illustrate how polydispersity impacts structural nucleation and ordering.",
+     "quote": "BCAT-4-Poly will use model hard-spheres (suspended in a liquid that makes them transparent) to explore pure and seeded colloidal crystal nucleation and the effects of polydispersity",
+     "lib": "PSI-28.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-29",
+     "title": "Binary Colloidal Alloy Test - 5",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Phase separation rates in colloidal mixtures impact structural evolution and product shelf-life.",
+     "quote": "The Phase Separation component investigates multi-phase interactions with potential applications in liquid waste recycling, coolant systems, and rocket fuel flow control.",
+     "lib": "PSI-29.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-40",
+     "title": "Coarsening in Solid Liquid Mixtures-2",
+     "area": "Materials Science",
+     "datum": "Microgravity eliminates sedimentation and convection, allowing proper evaluation of diffusion-controlled coarsening kinetics.",
+     "quote": "The investigation hypothesizes that finding a system which satisfies all the constraints of LSW theory such as particles are infinitely separated and there is no diffusional interaction between them is prohibitive for ground-based laboratory condition due to effects of particle sedimentation",
+     "lib": "PSI-40.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-41",
+     "title": "Coarsening in Solid-Liquid Mixtures-2 Reflight",
+     "area": "Materials Science",
+     "datum": "The removal of sedimentation and convection in space isolates multiparticle diffusion mechanisms during phase coarsening.",
+     "quote": "finding a system which satisfies all the constraints of LSW theory such as particles are infinitely separated and there is no diffusional interaction between them is prohibitive for ground-based laboratory condition due to effects of particle sedimentation and buoyancy-induced convection",
+     "lib": "PSI-41.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-44",
+     "title": "Coarsening in Solid-Liquid Mixtures",
+     "area": "Materials Science",
+     "datum": "Measurements of temporal evolution in solid-liquid mixtures validate diffusion-controlled coarsening models free from convective interference.",
+     "quote": "finding a system which satisfies all the constraints of LSW theory such as particles are infinitely separated and there is no diffusional interaction between them is prohibitive for ground-based laboratory condition due to effects of particle sedimentation and buoyancy-induced convection",
+     "lib": "PSI-44.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-94",
+     "title": "Physics of Hard Spheres Experiment",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Microgravity experiments on hard-sphere dispersions test scaling relations linked to Brownian diffusion coefficients.",
+     "quote": "It is hypothesized that the complete set of data from the microgravity experiments to test scalings proposed in the literature, e.g. the shear rate dependence of the viscosity and the rate of crystal growth with either the short- or the long-term self diffusion coefficient",
+     "lib": "PSI-94.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-137",
+     "title": "Phase Transitions in Colloid-Polymer Mixtures in Microgravity",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Depletion-induced interactions resulting from added polymers dictate phase separation kinetics when gravity-driven convection is absent.",
+     "quote": "Introducing non-adsorbing polymers into colloidal suspensions generates depletion-induced attractions that alter phase-transition kinetics; in microgravity, free from sedimentation and convection, these interactions can be directly modeled",
+     "lib": "PSI-137.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-168",
+     "title": "Advanced Colloids Experiment - Aging Dynamics and Stress-Relaxation in Colloidal Gels Studied in Microgravity",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Restructuring behavior in colloidal gels shows aging dynamics driven by thermal fluctuations and structural reorganizations.",
+     "quote": "evidence collected suggests that, in a soft solid, these avalanches may be triggered by thermal agitation and occur spontaneously, even in the absence of other external forces.",
+     "lib": "PSI-168.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-182",
+     "title": "Colloidal gels: Aging in microgravity, Structure of highly polydisperse gels",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Colloidal gels coarsen continuously in microgravity while thermal fluctuations diminish over time without gravitational collapse.",
+     "quote": "Colloidal gels in microgravity conditions will coarsen over time, and their thermal fluctuations will diminish over time as the gel gets coarser; the coarsening will continue indefinitely because gravitational collapse will not be possible.",
+     "lib": "PSI-182.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-185",
+     "title": "Testing Analytical and Numerical Models in Phase Coarsening using NASA Physical Sciences Informatics System",
+     "area": "Materials Science",
+     "datum": "Multiparticle diffusion modeling accurately tracks microstructural evolution during phase coarsening in colloidal and alloy systems.",
+     "quote": "Phase-field and multiparticle diffusion numerical methods can be applied to simulate the evolution of the microstructure during phase coarsening, delivering accurate statistical physical quantities",
+     "lib": "PSI-185.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-165",
+     "title": "Advanced Colloids Experiment -Temperature controlled- 2",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Tunable interparticle interactions such as critical Casimir forces drive self-assembly when sedimentation is eliminated.",
+     "quote": "By studying this process based on critical Casimir forces in microgravity, where sedimentation and convection are essentially removed, we will learn how to adjust complex attractive particle interactions.",
+     "lib": "PSI-165.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-188",
+     "title": "Advanced Colloids Experiment-Temperature 4",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Structural frustration induced by dopants alters the organization and local dynamics of colloidal networks.",
+     "quote": "dopants introduce structural frustration into the crystals which, in turn, can transform the crystals into disordered (polycrystalline) solids and glasses with novel mechanical properties.",
+     "lib": "PSI-188.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-91",
+     "title": "Physics of Colloids in Space",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Colloid-polymer mixtures establish equilibrium phase behaviors governed by depletion forces when buoyancy and sedimentation are removed.",
+     "quote": "It will also provide important new insight into the transition between equilibrium and kinetically limited behavior, in the absence of sedimentation.",
+     "lib": "PSI-91.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-48",
+     "title": "DEvice for the study of Critical LIquids and Crystallization Directional Solidification Insert-Reflight",
+     "area": "Materials Science",
+     "datum": "Solidification in a diffusion-controlled regime dictates interface pattern evolution in binary alloys.",
+     "quote": "Bridgman solidification of transparent binary alloys in a diffusion controlled growth regime can yield benchmark data required for establishing the detailed dynamics of interface pattern selection.",
+     "lib": "PSI-48.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-52",
+     "title": "Advanced Colloids Experiment - Temperature Control and Gradient Sample 11",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Varying depletant concentration and particle interactions allows controlled manipulation of colloidal structure assembly.",
+     "quote": "Under microgravity conditions, colloidal particles would exhibit unique crystallization and self-assembly behaviors that differ from those observed under Earth's gravity.",
+     "lib": "PSI-52.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-36",
+     "title": "Cold Atom Lab - Zero-G Studies of Few Body and Many-Body Physics",
+     "area": "Fundamental Physics",
+     "datum": "Universal scaling relations govern the energy and size parameters in multi-body physical systems.",
+     "quote": "One of the surprising predictions for quantum mechanical few-body systems is the existence of universality, i.e. the idea that highly intricate phenomena can be governed by underlying principles that are agnostic to specific microscopic realizations.",
+     "lib": "PSI-36.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-71",
+     "title": "Isothermal Dendritic Growth Experiment - Second United States Microgravity Payload - 2",
+     "area": "Materials Science",
+     "datum": "Suppression of buoyancy-driven convection enables precise observation of diffusion-controlled growth kinetics.",
+     "quote": "This IDGE investigation met the objective of acquiring accurate dendritic growth speed and morphology data under diffusion-controlled conditions, while greatly reducing buoyancy-induced convective heat transport through the reduction of gravity.",
+     "lib": "PSI-71.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-2",
+     "title": "Multi-Scale Modeling and Experimentation on Liquid Phase Sintering in Gravity and Microgravity Environments",
+     "area": "Materials Science",
+     "datum": "Gravitational body forces induce sedimentation and distortion in solid-liquid systems that are absent in microgravity.",
+     "quote": "The body force due to gravity acts in the vertical direction and increases with height and density. The distortion problem is most evident in structures with protrusions and unsupported or cantilever features.",
+     "lib": "PSI-2.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-15",
+     "title": "Advanced Colloids Experiment-Microscopy 2 Reflight",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Microgravity provides an ideal environment to study phase separation of complex fluids free from gravity-driven settling.",
+     "quote": "Liquids and gases of the same material usually have different densities, so they would behave differently under the influence of gravity, making the microgravity environment of the International Space Station ideal for these experiments.",
+     "lib": "PSI-15.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-5",
+     "title": "Plasma Kristall 4",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Many-body complex systems serve as useful analogues for tracking particle-level kinetic and aging dynamics.",
+     "quote": "Complex plasmas are ideal model systems for studying various problems of strongly coupled many-body systems in solid state physics, fluid physics, plasma physics",
+     "lib": "PSI-5.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-167",
+     "title": "Advanced Colloids Experiment - Imaging, Folding and Assembly of Colloidal Molecules",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Balancing repulsive and attractive interparticle forces enables the targeted self-assembly of complex colloidal structures.",
+     "quote": "By tuning the balance between electric double layer repulsion and hydrophobic attraction on both colloidal dimers and lock-and-key particles, we aim to study the assembly of those colloidal molecules into complex three-dimensional structures",
+     "lib": "PSI-167.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-86",
+     "title": "Observation and Analysis of Smectic Islands in Space",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Absence of gravitational forces and sedimentation isolates intrinsic hydrodynamic and coarsening behaviors in complex fluids.",
+     "quote": "In a microgravity environment, freely suspended smectic liquid crystal (FSLC) films will exhibit unique hydrodynamic and interfacial behaviors, such as reduced coarsening rates of island emulsions",
+     "lib": "PSI-86.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-190",
+     "title": "Particle Engulfment and Pushing By Solidifying Interfaces",
+     "area": "Materials Science",
+     "datum": "Interactions between insoluble particles and solid-liquid interfaces are determined by the balance of surface and transport forces.",
+     "quote": "This investigation hypothesizes that based on the nature of interaction and balance of forces acting on the particle there is a critical SLI velocity below which particles are pushed ahead of the advancing interface, and above which particle engulfment occurs.",
+     "lib": "PSI-190.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-80",
+     "title": "Light Microscopy Module Biophysics-3",
+     "area": "Biophysics",
+     "datum": "Eliminating buoyancy-driven convection shifts transport to a purely diffusive regime, reducing defects during phase organization.",
+     "quote": "Removing or greatly reducing the effects of buoyancy-driven convection and sedimentation in microgravity will result in slower, diffusion-controlled molecular transport that can yield larger crystals with fewer defects.",
+     "lib": "PSI-80.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-30",
+     "title": "Binary Colloidal Alloy Test - 6",
+     "area": "Complex Fluids - Soft Matter",
+     "datum": "Colloidal model systems undergo phase transitions and self-organization driven by interparticle interactions when sedimentation is removed.",
+     "quote": "Colloidal particles would exhibit behaviors analogous to atoms, allowing the study of phase transitions, crystallization, and self-organization without the interference of sedimentation and convection present on Earth.",
+     "lib": "PSI-30.md",
+     "stance": "supports"
+    }
+   ],
+   "against": [],
+   "n_support": 28,
+   "n_against": 0,
+   "contra_weight": 0,
+   "probability": 97,
+   "checked": 28,
+   "quotes_rejected": 0,
+   "rank": 1,
+   "id": "T01-matter"
+  },
+  {
+   "title": "Capillary-Driven Transport and Phase Separation in Open Porous Media",
+   "hypothesis": "When two-phase gas-liquid mixtures flow through fixed porous media or open capillary grooves under microgravity, fluid distribution and pressure drop are governed by an intricate balance between capillary pressure gradients, surface wetting properties, and interfacial drag, independent of gravitational body forces. Capillary forces alone can achieve passive phase separation and uniform liquid distribution if the pore size distribution and channel geometry satisfy critical wetting criteria. Deviations from classical Ergun-type pressure drop models occur due to capillary-inertial choking phenomena and phase redistribution at internal corners and junction sites.",
+   "summary": "Capillary forces and wetting geometry control two-phase flow regimes and phase separation in porous media in the absence of gravity.",
+   "tags": [
+    "capillary",
+    "porous media",
+    "phase separation",
+    "two-phase flow",
+    "wetting"
+   ],
+   "experiment": {
+    "title": "Packed Bed Two-Phase Flow Regimes and Pressure Drop Characterization",
+    "design": "Pump simultaneous streams of gas and water through packed columns filled with spherical and non-spherical porous packings of varying wettability. Record pressure drops across the bed and use optical imaging to monitor liquid hold-up and bubble migration across different flow rate ratios.",
+    "variables": [
+     "gas flow rate",
+     "liquid flow rate",
+     "packing wettability",
+     "particle size"
+    ],
+    "measurements": [
+     "pressure gradient across bed",
+     "liquid holdup fraction",
+     "flow regime transition boundaries",
+     "phase separation efficiency"
+    ],
+    "platform": "ISS Packed Bed Reactor Experiment facility"
+   },
+   "support": [
+    {
+     "acc": "PSI-37",
+     "title": "Capillary Flow Experiment - 2",
+     "area": "Fluid Physics",
+     "datum": "The document supports that capillary forces alone can achieve passive phase separation in microgravity.",
+     "quote": "Studies from CFE-2 may serve to demonstrate how liquids can be efficiently and passively separated from gases in the absence of gravity.",
+     "lib": "PSI-37.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-38",
+     "title": "Capillary Flow Experiment",
+     "area": "Fluid Physics",
+     "datum": "The document supports the principle that capillary forces drive fluid transport and distribution in microgravity.",
+     "quote": "Capillary forces (the interaction of liquid with solid that can draw a fluid up a narrow tube) continue to act in the absence of gravity and can be exploited to control fluid orientation",
+     "lib": "PSI-38.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-46",
+     "title": "Constrained Vapor Bubble",
+     "area": "Fluid Physics",
+     "datum": "The document supports that capillary pressure and interfacial curvature govern fluid behavior under microgravity.",
+     "quote": "On the microscopic scale, the scientific objective is to evaluate the local details of the Kelvin-Clapeyron model of change-of-phase heat transfer under microgravity conditions where the extended Young-Laplace equation predominates.",
+     "lib": "PSI-46.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-57",
+     "title": "Capillary Channel Flow - Critical Velocities Experiment Unit 1",
+     "area": "Fluid Physics",
+     "datum": "The document supports the occurrence of capillary-inertial choking phenomena in open capillary channels.",
+     "quote": "A primary objective is determining the critical flow rates at which free surface destabilization ('choking') and gas ingestion occur, emphasizing the capillary-inertial regime.",
+     "lib": "PSI-57.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-58",
+     "title": "Capillary Channel Flow - Critical Velocities Experiment Unit 2",
+     "area": "Fluid Physics",
+     "datum": "The document supports that flow limits in open capillary structures are governed by capillary, viscous, and inertial forces.",
+     "quote": "The central hypothesis for CCF-CV EU2 is that a critical flow rate limit also exists in open capillary channels with wedge and gapped-wedge geometries, and it is governed by the interplay of capillary, viscous, and inertial forces.",
+     "lib": "PSI-58.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-59",
+     "title": "Capillary Channel Flow - Phase Separation Experiment Unit 2",
+     "area": "Fluid Physics",
+     "datum": "The document supports that wedge channel designs can achieve passive phase separation through capillary and inertial forces.",
+     "quote": "The hypothesis underlying CCF-PS EU2 is that specific wedge and gapped-wedge channel designs can passively separate liquid and gas phases due to the complex interplay of capillary and inertial forces.",
+     "lib": "PSI-59.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-88",
+     "title": "Packed Bed Reactor Experiment - 2",
+     "area": "Fluid Physics",
+     "datum": "The document supports that two-phase pressure drop in porous media relies on surface tension and wetting properties, modifying classical Ergun models.",
+     "quote": "It is hypothesized that in microgravity two-phase packed bed flows, pressure drop will be a function of surface tension (captured by a modified Ergun equation), packing wettability and size, and pre-flow conditions.",
+     "lib": "PSI-88.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-89",
+     "title": "Packed Bed Reactor Experiment - Water Recovery",
+     "area": "Fluid Physics",
+     "datum": "The document supports adapting porous media pressure drop models to account for surface properties.",
+     "quote": "While the overarching principles of two-phase flow in porous media apply, the specific material properties of alumina will cause unique flow phenomena, and models can be modified to account for such.",
+     "lib": "PSI-89.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-111",
+     "title": "SUBSA Brazing of Aluminum Alloys IN Space",
+     "area": "Materials Science",
+     "datum": "The document supports that capillary-driven flows dictate liquid distribution when body forces are absent.",
+     "quote": "By performing capillary flow tests both on Earth and in a microgravity environment, the effects of microgravity on the kinetics of the larger masses of melt flow, and ultimate equilibrium shape of the meniscus will be closely examined.",
+     "lib": "PSI-111.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-187",
+     "title": "Plant Water Management",
+     "area": "Fluid Physics",
+     "datum": "The document supports that capillary forces and wetting properties achieve passive fluid distribution and phase management in microgravity.",
+     "quote": "This research was based on the hypothesis that, in microgravity where gravity-driven fluid behavior is absent, capillary forces, surface tension, and geometric design could provide reliable water and nutrient delivery to plant root zones.",
+     "lib": "PSI-187.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-189",
+     "title": "Validation of a CFD Model for Gas-Liquid Flows in Packed Bed Reactors to Enable Thermo-Fluid Analysis in Microgravity",
+     "area": "Fluid Physics",
+     "datum": "The document supports that low-gravity fluid dynamics are capillary-dominated rather than gravity-driven.",
+     "quote": "Understand capillary-dominated fluid dynamics in low-gravity environments where traditional gravity-driven models fail.",
+     "lib": "PSI-189.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-45",
+     "title": "Constrained Vapor Bubble-2",
+     "area": "Fluid Physics",
+     "datum": "The document supports that interfacial and capillary forces dominate fluid behavior in microgravity systems.",
+     "quote": "Even with the large millimeter dimensions of the CVB, interfacial forces dominate in these exceedingly small Bond Number systems with small viscous losses.",
+     "lib": "PSI-45.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-85",
+     "title": "Nucleate Pool Boiling eXperiment",
+     "area": "Fluid Physics",
+     "datum": "The document supports that capillary pressure gradients and liquid inertia dominate when gravitational forces are absent.",
+     "quote": "In microgravity conditions, where buoyancy forces become negligible, it is expected that forces arising from the inertia of the liquid, evaporation, and condensation at the vapor-liquid interface, disjoining pressure, capillary pressure gradient, and the resulting flow field will become more dominant.",
+     "lib": "PSI-85.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-4",
+     "title": "Flow Boiling and Condensation Experiment Flow Boiling Module",
+     "area": "Fluid Physics",
+     "datum": "The document supports that microgravity two-phase flow transport is dictated by flow inertia and surface tension.",
+     "quote": "This behavior is drastically altered In the absence of gravity, wherein flow fluid and heat transfer are dictated by flow inertia and surface tension.",
+     "lib": "PSI-4.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-68",
+     "title": "Flame Extinguishment Experiment - 2",
+     "area": "Combustion Science",
+     "datum": "The document supports that capillary stresses govern droplet behavior when gravitational body forces are minimized.",
+     "quote": "By conducting these experiments in a microgravity environment, the effects of buoyancy are minimized, and the droplet can be characterized only as a function of thermocapillary or solutalcapillary stresses allowing for a clear observation of the fundamental combustion processes",
+     "lib": "PSI-68.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-108",
+     "title": "Surface Tension Driven Convection Experiment-1",
+     "area": "Fluid Physics",
+     "datum": "The document supports the role of surface tension and capillary/interfacial phenomena in driving flows without gravity.",
+     "quote": "Researchers derived and identified the key dimensionless parameters governing thermocapillary flow, including the Marangoni number (Ma), Prandtl number (Pr), aspect ratio (Ar), and the novel surface deformation parameter (S).",
+     "lib": "PSI-108.md",
+     "stance": "supports"
+    },
+    {
+     "acc": "PSI-119",
+     "title": "Enhanced Particle Tracking in STDC Data and Its Industrial Application of Marangoni Convection",
+     "area": "Fluid Physics",
+     "datum": "The document supports that surface tension and interfacial curvature drive fluid flows independently of gravity.",
+     "quote": "By systematically comparing velocity and pressure fields obtained from these reanalyzed datasets with theoretical perturbation methods and COMSOL Multiphysics computational models, the project seeks to isolate the fundamental role of Marangoni convection and interfacial curvature in driving oscillatory and steady-state flows.",
+     "lib": "PSI-119.md",
+     "stance": "supports"
+    }
+   ],
+   "against": [
+    {
+     "acc": "PSI-90",
+     "title": "Packed Bed Reactor Experiment",
+     "area": "Fluid Physics",
+     "datum": "The document posits that gravity plays a significant role, contrasting the premise of gravitational independence in microgravity flow.",
+     "quote": "It is hypothesized that the gravity plays a significant role in determining the flow characteristics (pressure drop, flow regime transitions, liquid holdup, and mass transfer) of gas-liquid flows through porous media.",
+     "lib": "PSI-90.md",
+     "stance": "contradicts"
+    },
+    {
+     "acc": "PSI-49",
+     "title": "DEvice for the study of Critical LIquids and Crystallization - Alice Like Insert",
+     "area": "Fluid Physics",
+     "datum": "The document examines critical fluid phase separation but emphasizes fluctuating hydrodynamics and critical phenomena rather than porous media capillary transport.",
+     "quote": "To investigate the role of fluctuating hydrodynamics (Brownian motion and local hydrodynamic interactions) in the coarsening of domains, especially when the equilibrium volume fraction of the new phase is minimal.",
+     "lib": "PSI-49.md",
+     "stance": "qualifies"
+    },
+    {
+     "acc": "PSI-83",
+     "title": "Microgravity Investigation of Cement Solidification - Multi-use Variable Gravity Platform",
+     "area": "Materials Science",
+     "datum": "The document investigates cement hydration and diffusion-dominant transport under variable gravity rather than gas-liquid two-phase capillary flow.",
+     "quote": "It is hypothesized that under variable reduced gravity conditions different transport phenomena such as buoyancy, sedimentation, and convection are minimized and a more diffusion dominant transport will lead to varying degree of uniformity in distribution ofphases",
+     "lib": "PSI-83.md",
+     "stance": "qualifies"
+    },
+    {
+     "acc": "PSI-190",
+     "title": "Particle Engulfment and Pushing By Solidifying Interfaces",
+     "area": "Materials Science",
+     "datum": "The document analyzes particle engulfment during solidification where gravitational body forces explicitly affect the interacting forces.",
+     "quote": "These forces include particle-SLI interaction force, drag force on the particle, gravitational force, Saffman force, and Magnus force. The last three are strongly affected by the level of gravitational acceleration.",
+     "lib": "PSI-190.md",
+     "stance": "qualifies"
+    }
+   ],
+   "n_support": 17,
+   "n_against": 4,
+   "contra_weight": 2.5,
+   "probability": 84,
+   "checked": 25,
+   "quotes_rejected": 0,
+   "rank": 2,
+   "id": "T02-matter"
+  }
+ ],
+ "discarded": [
+  {
+   "title": "Interfacial Shear and Non-Newtonian Coupling in Biphasic and Polymeric Droplets",
+   "n_support": 7,
+   "n_against": 0
+  },
+  {
+   "title": "Radiative Extinction and Cool Flame Kinetics in Spherical Diffusion Flames",
+   "n_support": 8,
+   "n_against": 0
+  },
+  {
+   "title": "Diffusion-Controlled Dendritic Growth and Interfacial Anisotropy in Alloy Solidification",
+   "n_support": 8,
+   "n_against": 0
+  },
+  {
+   "title": "Inertial and Interfacial Forces Dominate Nucleate Pool Boiling in Microgravity",
+   "n_support": 6,
+   "n_against": 0
+  },
+  {
+   "title": "Nucleation, Condensation, and Coagulation Kinetics of Aerosols and Smoke in Quiescent Gas",
+   "n_support": 4,
+   "n_against": 0
+  },
+  {
+   "title": "Anisotropic Field-Driven Self-Assembly and Phase Kinetics in Magnetic and Electric Colloids",
+   "n_support": 6,
+   "n_against": 1
+  }
+ ]
+}

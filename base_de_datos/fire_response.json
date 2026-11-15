@@ -1,0 +1,44 @@
+{
+  "micro": {
+    "label": "ISS-STYLE RESPONSE (MICROGRAVITY)",
+    "steps": [
+      "Sound the alarm and alert the whole crew.",
+      "Cut forced ventilation in the affected volume - airflow feeds micro-g flames.",
+      "De-energize the suspected rack or circuit.",
+      "Apply the portable CO2/water-mist extinguisher through the access port.",
+      "Don masks; monitor CO/CO2 until readings stay flat - cool flames can persist unseen."
+    ],
+    "sources": [
+      "psi-25",
+      "psi-69",
+      "psi-101"
+    ]
+  },
+  "lunar": {
+    "label": "SURFACE HABITAT RESPONSE (PARTIAL G)",
+    "steps": [
+      "Sound the alarm; weak buoyancy lofts smoke slowly - do not trust ceiling detectors alone.",
+      "Stop HVAC flow to the compartment.",
+      "De-energize local power.",
+      "Suppress at the base of the flame; partial-g plumes tilt with any draft.",
+      "Verify extinction with sensors; partial-g fire data are sparse (FM2/LUCI pending)."
+    ],
+    "sources": [
+      "fm2",
+      "luci",
+      "psi-22"
+    ]
+  },
+  "earth": {
+    "label": "GROUND TEST-BENCH RESPONSE (1 G)",
+    "steps": [
+      "Raise the alarm and evacuate non-essential personnel.",
+      "Cut power to the bench.",
+      "Use the extinguisher class matching the fuel.",
+      "Ventilate only after confirmed extinction."
+    ],
+    "sources": [
+      "glenn"
+    ]
+  }
+}
