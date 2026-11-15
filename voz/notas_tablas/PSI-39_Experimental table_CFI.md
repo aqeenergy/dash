@@ -1,0 +1,3 @@
+Lista de 87 ensayos de llamas frías con gotas (dodecano y mezclas): presión, fracciones de O2, N2 y He, y si la gota estaba sujeta a una fibra. NO trae resultados (ni tiempo ni si se formó llama fría).
+
+PSI-39 · CFI (Cool Flames Investigation), en la ISS (2017), con el mismo equipo que FLEX: "Flex Number" sigue la numeración de FLEX y "CIR" es el identificador del ensayo en el rack. "Oxygen", "Nitrogen" y "Helium" son fracciones molares (0,21 = 21 %). "Fiber" Yes/No = gota sujeta a una fibra o flotando libre. "C12H26" es n-dodecano; "[.75]/[.25] C12H26/iso-dodecane" es una mezcla 75 % / 25 %. Para resultados, busca en los documentos.

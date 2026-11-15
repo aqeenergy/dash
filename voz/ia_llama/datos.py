@@ -99,17 +99,34 @@ def _investigacion(nombre: str) -> str | None:
     return f"{f['accession']} · {acr}: {f.get('title', '')}"
 
 
+# Notas del equipo sobre cada tabla (unidades, grupos, referencias): voz/notas_tablas/<tabla>.md
+DIR_NOTAS = config.RAIZ / "notas_tablas"
+
+
 @lru_cache(maxsize=None)
-def _nota_propia(nombre: str) -> str | None:
-    """Texto del .md/.txt que el equipo haya puesto junto a la tabla (unidades, aclaraciones)."""
-    for ruta in config.DIR_TABLAS.rglob("*"):
-        if ruta.stem == nombre and ruta.suffix.lower() in {".md", ".txt"}:
-            return " ".join(ruta.read_text(encoding="utf-8", errors="ignore").split())[:1500]
+def _nota_texto(nombre: str) -> str | None:
+    for carpeta in (DIR_NOTAS, config.DIR_TABLAS):
+        if not carpeta.exists():
+            continue
+        for ruta in carpeta.rglob("*"):
+            if ruta.stem == nombre and ruta.suffix.lower() in {".md", ".txt"}:
+                return ruta.read_text(encoding="utf-8", errors="ignore")
     return None
 
 
+def _nota_propia(nombre: str, completa: bool = False) -> str | None:
+    """Nota del equipo sobre la tabla. El primer párrafo es el resumen (va al catálogo de las
+    instrucciones); la nota completa va en describir_tabla."""
+    texto = _nota_texto(nombre)
+    if not texto:
+        return None
+    if not completa:
+        texto = texto.strip().split("\n\n")[0]
+    return " ".join(texto.split())[:4000 if completa else 600]
+
+
 def _descripcion(nombre: str) -> str | None:
-    nota = _nota_propia(nombre)
+    nota = _nota_propia(nombre, completa=True)
     if nota:
         return nota
     f = _ficha_psi(nombre)

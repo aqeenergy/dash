@@ -1,0 +1,3 @@
+Resumen por días de ACME E-FIELD (llamas sometidas a un campo eléctrico): polaridad de la malla, combustible y llamas encendidas. Muchas filas solo amplían la concentración del día anterior. No trae resultados de cada llama.
+
+PSI-22 · ACME E-FIELD Flames, en la ISS (2018). "Test Day" tiene el formato AADDD (año y día del año). "Mesh Polarity" es la polaridad de la fuente de alta tensión y del electrodo de cobre respecto al quemador. "Fuel Conc" es la concentración del combustible diluido en nitrógeno; las filas que solo tienen "Fuel Conc" son concentraciones adicionales del mismo día. "Flames Ignited" cuenta solo las llamas que se encendieron.

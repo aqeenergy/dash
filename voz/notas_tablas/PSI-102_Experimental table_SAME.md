@@ -1,0 +1,3 @@
+SAME no quema materiales: los calienta (pirólisis) para producir humo y medir sus partículas. 8 muestras: teflón con 4 condiciones, y kapton, silicona, mecha y ftalato de dibutilo con esas mismas condiciones.
+
+PSI-102 · SAME (Smoke and Aerosol Measurement Experiment), en la ISS. Su objetivo es el humo y la detección de humo, no la propagación del fuego: no la uses para decir cómo arde un material. Las muestras 1-4 son teflón con distintos flujos de aire (cm/s), tasas de pérdida de peso (mg/min) y tiempos de envejecimiento del humo (minutos). Las muestras 5-8 (kapton, caucho de silicona, mecha de lámpara y ftalato de dibutilo) se ensayaron "con las mismas condiciones que 1-4", por eso sus celdas están vacías.

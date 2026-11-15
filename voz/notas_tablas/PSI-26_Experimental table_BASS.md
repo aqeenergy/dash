@@ -1,0 +1,3 @@
+Lista de los ensayos de BASS (122 filas) (fecha, número de ensayo, muestra y material: SIBAL, PMMA, esferas, parafina...). NO trae resultados ni condiciones (oxígeno, flujo): sirve para contar ensayos por material, no para decir cómo ardieron.
+
+PSI-26 · BASS (Burning and Suppression of Solids), en la ISS (2012-2013). "GMT" es el día del año (por ejemplo, 90 = 30 de marzo de 2012). "As Run Test #" es el orden en que se hicieron y "Test #" el número del plan; un sufijo como "53a" es la repetición de ese ensayo. Las columnas de materiales están escritas de forma irregular ("pmma sphere", "PMMA sphere 2 cm", "2 cm sphere"): agrúpalas con cuidado. Para resultados (si se apagó, velocidades), busca en los documentos.
