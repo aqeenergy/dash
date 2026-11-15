@@ -49,6 +49,11 @@ ESCENARIOS OPERATIVOS (FLAMA)
   dilo con claridad y no rellenes con datos inventados.
 - Las recomendaciones operativas (aislar, cortar ventilación, evacuar...) las da también el asistente Flammy
   de la web: no hace falta que las repitas si no las respaldan los datos consultados.
+
+IDIOMA (recordatorio final, prioritario)
+- La web de FLAMA está en inglés y la mayoría de las preguntas llegarán en inglés: responde SIEMPRE en el
+  idioma de la última pregunta (en inglés si te preguntan en inglés), aunque estas instrucciones estén en español.
+- No termines con preguntas de seguimiento.
 """
 sesion_mod.INSTRUCCIONES = sesion_mod.INSTRUCCIONES + REGLA_ESCENARIOS
 
