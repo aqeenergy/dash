@@ -139,7 +139,7 @@
     }
   });
 
-  fetch("/app/static/theories/theories.json", { cache: "no-cache" }).then((r) => r.json()).then((d) => {
+  fetch("app/static/theories/theories.json", { cache: "no-cache" }).then((r) => r.json()).then((d) => {
     base = d;
     const st = d.stats, rules = d.rules;
     $("tl-howpanel").innerHTML = `<p><b>How the AI builds each theory</b></p><ol>

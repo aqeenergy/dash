@@ -31,7 +31,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 DB_DIR = ROOT / "base_de_datos"           # READ-ONLY
 GLB_PATH = ROOT / "static" / "nave.glb"   # served by Streamlit static serving
-GLB_URL = "/app/static/nave.glb"
+GLB_URL = "app/static/nave.glb"  # relative (Streamlit Cloud serves under /~/+/)
 SIM_DIR = ROOT / "sim3d"
 
 MMHG_TO_KPA = 0.133322

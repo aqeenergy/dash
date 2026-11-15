@@ -30,7 +30,7 @@ DB_DIR = ROOT / "base_de_datos"                      # READ-ONLY
 OUT_DIR = ROOT / "static" / "safety"
 OUT_FILE = OUT_DIR / "research.json"
 DOI_CHECK_FILE = OUT_DIR / "doi_check.json"          # written by: python safety_research.py --check-dois
-URL = "/app/static/safety/research.json"
+URL = "app/static/safety/research.json"
 VERSION = 3
 
 WEIGHTS = {"A": 0.40, "H": 0.25, "E": 0.20, "F": 0.15}

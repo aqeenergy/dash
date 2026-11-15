@@ -1,7 +1,7 @@
 // SAFETY MECHANISMS bubble: ranked PSI research (data: /app/static/safety/research.json, built by safety_research.py)
 (function () {
   "use strict";
-  const URL_DATA = "/app/static/safety/research.json";
+  const URL_DATA = "app/static/safety/research.json";  // relative (Streamlit Cloud serves under /~/+/)
   const $ = (id) => document.getElementById(id);
   const root = $("sm-root");
   if (!root) return;

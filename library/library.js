@@ -2,7 +2,7 @@
 // Opened from Bubble 1 (SORT → Database library) or from an AI citation (flama:abrir-archivo).
 (function () {
   "use strict";
-  const URL_INDEX = "/app/static/library/index.json";
+  const URL_INDEX = "app/static/library/index.json";  // relative (Streamlit Cloud serves under /~/+/)
   const $ = (id) => document.getElementById(id);
   const root = $("psi-library"), list = $("lib-list"), view = $("lib-view");
   if (!root) return;

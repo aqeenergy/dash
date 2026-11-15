@@ -30,8 +30,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DB_DIR = ROOT / "base_de_datos"          # READ-ONLY
 OUT_DIR = ROOT / "static" / "library"    # derived text library
-URL = "/app/static/library/"
-VERSION = 4                              # bump to force a rebuild after format changes
+URL = "app/static/library/"  # relative (Streamlit Cloud serves under /~/+/)
+VERSION = 5                              # bump to force a rebuild after format changes
 
 DERIVED = {"class_notes.json", "experiments.json", "fire_response.json", "knowledge_build_info.json",
            "materials.json", "mission_presets.json", "psi_index.json", "rules.json", "sources.json"}
