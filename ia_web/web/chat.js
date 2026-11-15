@@ -498,12 +498,11 @@
     }
     return { responder, dictado, cargar };
   })();
-  const ESTADO_BD = "Database mode · answers from the base_de_datos files";
+  const ESTADO_BD = "AI connected";
 
   // Estado inicial sin abrir sesión (abrir el WebSocket ya inicia una sesión de Gemini)
   if (!DEPLOYED) {
     estado("conectada", ESTADO_BD);
-    $("ia-modo").textContent = "No generative AI · verbatim quotes + table data"; $("ia-modo").hidden = false;
     BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
   } else
   fetch(`${BASE_HTTP}/ia/modo`).then((r) => r.json()).then((m) => {

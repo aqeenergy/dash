@@ -17,10 +17,10 @@ st.set_page_config(
 
 st.markdown(
     """<style>
-    header[data-testid="stHeader"] {
+    header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"], #MainMenu, footer, .stDeployButton {
+        display: none !important;
         height: 0px !important;
-        min-height: 0px !important;
-        background: transparent !important;
     }
     .block-container {
         padding-top: 0rem !important;

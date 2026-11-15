@@ -2190,10 +2190,6 @@ def render_live_mission_control() -> None:
 <div id="view-cover" class="os-view active">
   <div class="cover-stage">
 
-    <label class="video-loader-pill press-able" title="Select .mp4 video file">
-      📁 Load .mp4 Video
-      <input id="custom-video-input" type="file" accept="video/mp4,video/*" style="display:none;">
-    </label>
 
     <div class="cover-video-viewport">
       <video id="flama-vid-a" class="cover-vid-layer" style="opacity:1;" muted playsinline preload="auto" src="{video_data_uri}"></video>
@@ -2981,7 +2977,7 @@ def render_live_mission_control() -> None:
   initCoverVideos();
   requestAnimationFrame(monitorDualVideoLoop);
 
-  fileInput.addEventListener("change", (e) => {{
+  if (fileInput) fileInput.addEventListener("change", (e) => {{
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
