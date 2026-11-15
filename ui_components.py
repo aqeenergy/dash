@@ -2260,12 +2260,12 @@ def render_live_mission_control() -> None:
   const fileInput = document.getElementById("custom-video-input");
 
   let crossfading = false;
-  const TARGET_LOOP_START = 8.0;
+  const TARGET_LOOP_START = 6.0;   // the sphere is steady from ~5.75 s (measured frame by frame)
   const CROSSFADE_SEC     = 0.50;
 
   function getLoopStart(dur) {{
     if (!dur || isNaN(dur)) return TARGET_LOOP_START;
-    return dur > 8.35 ? TARGET_LOOP_START : Math.max(0.0, dur * 0.55);
+    return dur > TARGET_LOOP_START + 0.35 ? TARGET_LOOP_START : Math.max(0.0, dur * 0.55);
   }}
 
   // The background layer is parked at the loop start AHEAD of time; the crossfade only starts once that
@@ -2275,13 +2275,38 @@ def render_live_mission_control() -> None:
   const near = (v, t) => Math.abs(v.currentTime - t) < 0.06;
   function parkAt(v, t) {{ if (!near(v, t) && !v.seeking) v.currentTime = t; }}
 
-  function monitorDualVideoLoop() {{ checkLoop(); requestAnimationFrame(monitorDualVideoLoop); }}
+  // In flama_cover.mp4 the sphere keeps growing slowly after it settles: radius = 195.24 + 2.287·t px
+  // (linear fit, max error 0.5 px), centred at 49.97 % / 46.82 % of the frame. Each layer is scaled by
+  // R(loop start) / R(t) around that centre, so the sphere keeps one size and the loop jump is invisible.
+  const GROW_R0 = 195.24, GROW_K = 2.287, SPHERE_CX = 0.4997, SPHERE_CY = 0.4682;
+  const growR = (t) => GROW_R0 + GROW_K * t;
+  function compensate(v, mediaTime) {{
+    if (!v.videoWidth) return;
+    const t = mediaTime != null ? mediaTime : v.currentTime, t0 = getLoopStart(v.duration);
+    const k = t > t0 ? growR(t0) / growR(t) : 1;
+    const w = v.clientWidth, h = v.clientHeight, ar = v.videoWidth / v.videoHeight;
+    const cw = w / h > ar ? h * ar : w, ch = w / h > ar ? h : w / ar;   // object-fit: contain box
+    v.style.transformOrigin = `${{((w - cw) / 2 + SPHERE_CX * cw).toFixed(1)}}px ${{((h - ch) / 2 + SPHERE_CY * ch).toFixed(1)}}px`;
+    v.style.transform = k === 1 ? "" : `scale(${{k.toFixed(5)}})`;
+  }}
+
+  // exact time of each painted frame where supported (Chrome, Edge, Safari); otherwise every animation frame
+  const HAS_RVFC = "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  if (HAS_RVFC) [vidA, vidB].forEach((v) => {{
+    const cb = (now, meta) => {{ compensate(v, meta.mediaTime); v.requestVideoFrameCallback(cb); }};
+    v.requestVideoFrameCallback(cb);
+  }});
+  function monitorDualVideoLoop() {{
+    checkLoop();
+    requestAnimationFrame(monitorDualVideoLoop);
+  }}
   setInterval(checkLoop, 100);   // animation frames are throttled when the window is not in front
 
   function checkLoop() {{
     // the visible layer is read from the screen itself, so no state variable can drift out of sync
     const fg = vidB.style.opacity === "1" ? vidB : vidA;
     const bg = fg === vidA ? vidB : vidA;
+    compensate(fg); compensate(bg);   // keeps the size right even when frame callbacks are throttled
 
     if (fg && bg && fg.readyState >= 2 && fg.duration > 0) {{
       const dur = fg.duration;
@@ -2293,6 +2318,7 @@ def render_live_mission_control() -> None:
       if (!crossfading && fg.currentTime >= triggerTime && bgReady) {{
         crossfading = true;
         const swap = () => {{
+          compensate(fg); compensate(bg);
           bg.style.opacity = "1";
           fg.style.opacity = "0";
           setTimeout(() => {{
@@ -2310,6 +2336,8 @@ def render_live_mission_control() -> None:
       }}
     }}
   }}
+
+  [vidA, vidB].forEach((v) => v.addEventListener("seeked", () => compensate(v)));
 
   function startVideos(url) {{
     crossfading = false;
