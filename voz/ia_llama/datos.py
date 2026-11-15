@@ -127,8 +127,14 @@ def _nota_propia(nombre: str, completa: bool = False) -> str | None:
 
 def _descripcion(nombre: str) -> str | None:
     nota = _nota_propia(nombre, completa=True)
+    f = _ficha_psi(nombre)
     if nota:
-        return nota
+        cab = ""
+        if f:
+            cab = f"{_investigacion(nombre)}. "
+            if f.get("doi"):
+                cab += f"DOI DEL EXPERIMENTO (registro PSI): {f['doi']}. "
+        return cab + nota
     f = _ficha_psi(nombre)
     if not f:
         return None

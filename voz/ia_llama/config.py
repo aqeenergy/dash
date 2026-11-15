@@ -57,7 +57,7 @@ TEXTO_TOQUE = os.getenv("TEXTO_TOQUE", "(Sigue, por favor: termina la respuesta 
 
 # --- Protección de la cuota (que nadie agote el límite de todos) ---
 MAX_SESIONES_SIMULTANEAS = int(os.getenv("MAX_SESIONES_SIMULTANEAS", "3"))
-MAX_SESIONES_IP_HORA = int(os.getenv("MAX_SESIONES_IP_HORA", "30"))
+MAX_SESIONES_IP_HORA = int(os.getenv("MAX_SESIONES_IP_HORA", "300"))  # en una sede todos comparten IP
 MAX_MINUTOS_SESION = int(os.getenv("MAX_MINUTOS_SESION", "15"))
 
 # --- Audio (lo fija la API Live; no cambiar) ---
