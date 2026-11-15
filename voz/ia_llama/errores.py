@@ -15,15 +15,15 @@ from __future__ import annotations
 import re
 
 MENSAJES = {
-    "inactividad": "Sesión en pausa por inactividad; se reanudará con la siguiente pregunta.",
-    "clave": "La clave de Gemini no es válida o no tiene acceso. Revisa GEMINI_API_KEY en el .env.",
-    "region": "Google no permite usar este modelo desde esta ubicación o con este plan.",
-    "modelo": "El modelo no existe o ha cambiado de nombre; probando el siguiente de la lista.",
-    "saturado": "Los modelos de Google están saturados; usando un modelo de reserva.",
-    "cuota_dia": "Se ha agotado la cuota diaria gratuita de Gemini. Habrá que esperar a mañana o cambiar de clave/proyecto.",
-    "limite": "Se ha alcanzado el límite de uso por minuto; esperando unos segundos...",
-    "red": "Se ha perdido la conexión con Gemini; reconectando...",
-    "otro": "Error inesperado con Gemini; reintentando...",
+    "inactividad": "Session paused for inactivity; it will resume with your next question.",
+    "clave": "The AI server's Gemini key is not valid or has no access.",
+    "region": "Google does not allow this model from this location or plan.",
+    "modelo": "Model not available; trying the next one.",
+    "saturado": "Google's models are busy; using a backup model.",
+    "cuota_dia": "The daily Gemini quota has run out. Please try again later.",
+    "limite": "Rate limit reached; waiting a few seconds...",
+    "red": "Lost the connection to Gemini; reconnecting...",
+    "otro": "Unexpected error with Gemini; retrying...",
 }
 
 # Esperas (segundos) para reintentar cuando el límite es por minuto o hay fallos de red

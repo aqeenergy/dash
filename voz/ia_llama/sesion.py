@@ -124,7 +124,7 @@ class SesionVoz:
                     restante = fin - time.monotonic()
                     if not await self._bucle(sesion, timeout=max(restante, 1)):
                         await self._emitir({"tipo": "error", "mensaje":
-                            f"La sesión ha durado más de {config.MAX_MINUTOS_SESION} minutos. Vuelve a conectar."})
+                            f"The session lasted more than {config.MAX_MINUTOS_SESION} minutes. Please reconnect."})
                         self._cerrando = True
             except asyncio.CancelledError:
                 raise
@@ -159,7 +159,7 @@ class SesionVoz:
                     if fallidos_seguidos >= len(modelos):  # ya se han probado todos
                         if tipo == "saturado":
                             await self._emitir({"tipo": "aviso", "mensaje":
-                                "Todos los modelos de Google están saturados; reintento en 30 s."})
+                                "All of Google's models are busy; retrying in 30 s."})
                             await asyncio.sleep(30)
                             i, fallidos_seguidos, self._handle = 0, 0, None
                             continue
@@ -173,7 +173,7 @@ class SesionVoz:
                 if tipo == "limite":
                     if intentos_limite >= len(errores.ESPERAS_LIMITE):
                         await self._emitir({"tipo": "error", "mensaje":
-                            "Límite de uso de Gemini alcanzado. Prueba de nuevo en un minuto."})
+                            "Gemini rate limit reached. Please try again in a minute."})
                         break
                     espera = errores.ESPERAS_LIMITE[intentos_limite]
                     intentos_limite += 1
@@ -183,7 +183,7 @@ class SesionVoz:
 
                 # red u otro: reconectar (con el handle se recupera la conversación)
                 if intentos_red >= len(errores.ESPERAS_RED):
-                    await self._emitir({"tipo": "error", "mensaje": f"No se pudo mantener la conexión: {e}"})
+                    await self._emitir({"tipo": "error", "mensaje": f"Could not keep the connection: {e}"})
                     break
                 espera = errores.ESPERAS_RED[intentos_red]
                 intentos_red += 1
@@ -235,7 +235,7 @@ class SesionVoz:
                 raise ConnectionError("respuesta atascada: Gemini no responde a los toques")
             self._toques += 1
             self._ultimo_rx = time.monotonic()
-            await self._emitir({"tipo": "aviso", "mensaje": "La respuesta se ha quedado parada; reactivándola..."})
+            await self._emitir({"tipo": "aviso", "mensaje": "The answer got stuck; restarting it..."})
             await sesion.send_realtime_input(text=config.TEXTO_TOQUE)
 
     async def _enviar(self, sesion) -> None:
