@@ -8,7 +8,7 @@
   const LOCAL = /^(localhost|127\.|\[::1\]|$)/.test(host);
   const BASE_HTTP = CFG.base ? String(CFG.base).replace(/\/+$/, "") : `http://${host}:${CFG.puerto}`;
   const URL_WS = BASE_HTTP.replace(/^http/, "ws") + "/ws/voz";
-  const DEPLOYED = !!CFG.base || LOCAL;
+  let DEPLOYED = !!CFG.base || LOCAL;   // false = database mode (also the fallback when the AI server is unreachable)
   const $ = (id) => document.getElementById(id);
   const lista = $("ia-mensajes");
   const ESTADOS = { desconectada: "AI not connected", conectando: "Connecting to the AI…", conectada: "AI connected", escuchando: "Listening…", pausa: "AI paused · resumes when you speak or type", error: "AI disconnected" };
@@ -617,8 +617,13 @@
     estado("conectada", ESTADO_BD);
     BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
   } else
-  fetch(`${BASE_HTTP}/ia/modo`).then((r) => r.json()).then((m) => {
+  fetch(`${BASE_HTTP}/ia/modo`, { signal: AbortSignal.timeout ? AbortSignal.timeout(90000) : undefined }).then((r) => r.json()).then((m) => {
     modoSimulado = !!m.simulado; $("ia-modo").hidden = !modoSimulado;
     estado("desconectada", modoSimulado ? "AI ready (simulated) · type a scenario" : "AI ready · type or press the mic");
-  }).catch(() => estado("desconectada", "AI server offline"));
+  }).catch(() => {
+    // AI server unreachable: answer from the database files instead of leaving the chat dead
+    DEPLOYED = false;
+    estado("conectada", ESTADO_BD);
+    BaseDatos.cargar().catch(() => estado("error", "Database library not reachable"));
+  });
 })();

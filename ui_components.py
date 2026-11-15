@@ -713,6 +713,11 @@ def render_live_mission_control() -> None:
         _ia_url = _ia_url or str(st.secrets.get("FLAMA_IA_URL", ""))
     except Exception:
         pass
+    # Public AI server (Render). An env var or Streamlit secret FLAMA_IA_URL overrides it;
+    # FLAMA_IA_URL="local" uses the server on this machine (port FLAMA_IA_PUERTO).
+    _ia_url = _ia_url or "https://flama-ia.onrender.com"
+    if _ia_url.strip().lower() == "local":
+        _ia_url = ""
     _cfg = json.dumps({"puerto": int(_os.getenv("FLAMA_IA_PUERTO", "8001")), "nombre": "Llama", "base": _ia_url.strip()})
     _chat_js = (_web / "chat.js").read_text(encoding="utf-8").replace("</", "<" + "\\" + "/")
     IA_CHAT_JS = "<script>window.FLAMA_IA = " + _cfg + ";</script>" + "<script>" + _chat_js + "</script>"
