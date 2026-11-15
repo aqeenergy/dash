@@ -502,7 +502,7 @@
       vivo.querySelector(".ia-texto").textContent = txt; bajar();
     }
     function enviarVoz(txt) {
-      txt = (txt || "").trim();
+      txt = (txt || "").replace(/\[[^\]]*\]|\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();   // Whisper noise tags: [Música], (risas)…
       if (vivo) { vivo.remove(); vivo = null; }
       if (!txt) { aviso("I did not catch any words. Press the mic and speak again, a bit closer to the microphone."); return; }
       window.flamaChat.preguntar(txt);
