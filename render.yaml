@@ -1,0 +1,17 @@
+# Render Blueprint — public AI voice/text server for FLAMA (ia_web/servidor_web.py).
+# Render → New → Blueprint → pick this GitHub repo. Every git push to main redeploys it.
+# Then set FLAMA_IA_URL = https://<this-service>.onrender.com in the Streamlit Cloud app's Secrets.
+services:
+  - type: web
+    name: flama-ia
+    runtime: python
+    plan: free
+    autoDeploy: true
+    buildCommand: pip install -r voz/requirements.txt
+    startCommand: uvicorn ia_web.servidor_web:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /ia/modo
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: GEMINI_API_KEY      # entered by you in the Render dashboard; never stored in the repo
+        sync: false

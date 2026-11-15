@@ -71,8 +71,7 @@
         ${it.impact_quote ? `<span class="sm-label quote">The PSI record says</span><p class="sm-quote">${esc(it.impact_quote)}</p>` : ""}
         <span class="sm-label ours">Limitation</span><p>${esc(it.limitation)}</p>`)}
       ${block("4", "Source & Evidence", `<div class="sm-verify ${v.ok ? "" : "warn"}">${v.ok ? CHECK : WARN}${esc(v.text)}</div>
-        <div class="sm-links">${s.doi ? `<a href="${esc(s.doi_url)}" target="_blank" rel="noopener">DOI ${esc(s.doi)}</a>` : ""}
-          <a href="${esc(s.psi_url)}" target="_blank" rel="noopener">NASA PSI repository page</a></div>
+        ${s.doi ? `<p class="sm-meta">DOI ${esc(s.doi)} · identifier of the PSI record stored in <code>base_de_datos/${esc(s.record_file)}</code></p>` : ""}
         <div class="sm-actions"><button class="sm-btn sm-open" type="button" data-file="${esc(s.record_lib)}">Open record in library</button>
           ${s.table_lib ? `<button class="sm-btn ghost sm-open" type="button" data-file="${esc(s.table_lib)}">Open data table</button>` : ""}</div>
         <p class="sm-meta">Local files: <code>base_de_datos/${esc(s.record_file)}</code>${s.table_file ? ` · <code>base_de_datos/${esc(s.table_file)}</code>` : ""} · ${s.publications} publications listed in the record.</p>

@@ -745,6 +745,10 @@ const UI = {
     $("s3-compare").addEventListener("change", (e) => { if (app) app.setSplit(e.target.checked); this.labels(); });
     selB.addEventListener("change", (e) => { if (!app) return; app.state.habB = e.target.value; if (app.B) app.B.applyHabitat(e.target.value, H[e.target.value]); this.labels(); });
     $("s3-info-close").addEventListener("click", () => { $("s3-info").hidden = true; });
+    $("s3-info").addEventListener("click", (e) => {
+      const b = e.target.closest(".s3-lib[data-lib]");
+      if (b) window.dispatchEvent(new CustomEvent("flama:abrir-archivo", { detail: { archivo: b.dataset.lib } }));
+    });
     this.setHabitat("iss", true);
   },
   setHabitat(key, silent) {
@@ -816,9 +820,14 @@ const UI = {
   },
   sourcesHTML(list) {
     if (!list || !list.length) return "";
-    return `<div class="s3-src">${list.map((s) => s.url
-      ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}${s.doi ? " · DOI " + esc(s.doi) : ""}</a><small>${esc(s.detail || "")}</small>`
-      : `<div>${esc(s.label)}<small>${esc(s.detail || "")}</small></div>`).join("")}</div>`;
+    return `<div class="s3-src">${list.map((s) => this.srcHTML(s)).join("")}</div>`;
+  },
+  // Internal references only: record + exact table, opened in the app's database library.
+  srcHTML(s) {
+    const btn = (lib, label) => `<button type="button" class="s3-lib" data-lib="${esc(lib)}">${esc(label)}</button>`;
+    const head = s.lib ? btn(s.lib, s.label + (s.doi ? " · DOI " + s.doi : "")) : `<span>${esc(s.label)}</span>`;
+    const table = s.table_lib ? btn(s.table_lib, `Open the exact table: ${s.table_file}`) : "";
+    return `<div>${head}${table}<small>${esc(s.detail || "")}</small></div>`;
   },
   showEvidence(zone) {
     const e = DATA.evidence[zone]; if (!e) return;
@@ -835,7 +844,7 @@ const UI = {
     if (key === "flow") { title = "Ventilation range"; s = { kind: "psi", label: "PSI-25 · PSI-98 · PSI-100", detail: DATA.flow.source }; }
     else { s = DATA.habitats[this.hab].sources[key]; title = { g: "Gravity", o2: "Oxygen fraction", kpa: "Total pressure" }[key] + " · " + DATA.habitats[this.hab].name; }
     const tag = s.kind === "concept" ? `<span class="s3-tag concept">Conceptual</span>` : `<span class="s3-tag psi">${s.kind === "physics" ? "Physical constant" : "From base_de_datos"}</span>`;
-    const link = s.url ? `<div class="s3-src"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}${s.doi ? " · DOI " + esc(s.doi) : ""}</a></div>` : `<div class="s3-src"><div>${esc(s.label)}</div></div>`;
+    const link = `<div class="s3-src">${this.srcHTML(s)}</div>`;
     $("s3-info-body").innerHTML = `${tag}<h4>${esc(title)}</h4><p>${esc(s.detail || "")}</p>${link}`;
     $("s3-info").hidden = false;
   },

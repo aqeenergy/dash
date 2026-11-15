@@ -150,7 +150,9 @@ def build_index() -> list[dict[str, Any]]:
             "rows": rows,
             "pubs": len(pubs) if isinstance(pubs, list) else 0,
             "doi": doi,
-            "url": f"https://doi.org/{doi}" if doi else "https://psi.nasa.gov/physci/repo",
+            # internal references only: the readable record + the exact experimental tables (library ids)
+            "lib": _lib_id(acc) + ".md",
+            "table_libs": [_lib_id(t.stem) + ".csv" for t in tables if "Experimental table" in t.name and t.suffix.lower() == ".csv"],
             "blurb": _clip(objective),
             "kw": " ".join([acc, title, acr, fuel, str(meta.get("experimentHardware") or ""), objective]).lower(),
         })
@@ -196,21 +198,30 @@ def _experiments_json(cards: list[dict[str, Any]]) -> dict[str, Any]:
     return out
 
 
+def _lib_id(name: str) -> str:
+    """Same file ids as the web's text library (biblioteca.py)."""
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("_")
+
+
 def _sources_json(cards: list[dict[str, Any]]) -> dict[str, Any]:
+    """Every source points to a file INSIDE base_de_datos (opened in the app's library), never to the web.
+    Flight programmes (FM2, LUCI, FLARE, Saffire IV-VI, GRC rack) are documented in the team's curated
+    file experiments.json.py; the PSI investigations in their own record + experimental tables."""
+    curated = {"lib": _lib_id(CURATED_FILE) + ".txt", "file": CURATED_FILE}
     out = {
-        "glenn": {"name": "NASA GRC ISS Combustion Research", "url": "https://www1.grc.nasa.gov/space/iss-research/"},
-        "fm2": {"name": "NASA FM2 - Flammability of Materials on the Moon", "url": "https://www1.grc.nasa.gov/space/iss-research/"},
-        "luci": {"name": "LUCI - Lunar Combustion Investigation", "url": "https://www1.grc.nasa.gov/space/iss-research/"},
-        "flare2021": {"name": "JAXA FLARE - Flammability Limits At Reduced-g", "url": "https://humans-in-space.jaxa.jp/en/"},
-        "saffire45": {"name": "NASA Saffire IV-V - Spacecraft Fire Safety", "url": "https://www1.grc.nasa.gov/space/scm/saffire/"},
-        "saffire6": {"name": "NASA Saffire VI - Spacecraft Fire Safety", "url": "https://www1.grc.nasa.gov/space/scm/saffire/"},
-        "psi-repo": {"name": "NASA Physical Sciences Informatics repository", "url": "https://psi.nasa.gov/physci/repo"},
+        "glenn": {"name": "CIR / GRC rack — curated experiment list", **curated},
+        "fm2": {"name": "FM2 — curated experiment list", **curated},
+        "luci": {"name": "LUCI — curated experiment list", **curated},
+        "flare2021": {"name": "FLARE — curated experiment list", **curated},
+        "saffire45": {"name": "Saffire IV-V — curated experiment list", **curated},
+        "saffire6": {"name": "Saffire VI — curated experiment list", **curated},
+        "psi-repo": {"name": "Catalogue of all PSI investigations", "lib": "catalog.md", "file": "_todas_las_investigaciones_PSI.json"},
     }
     for c in cards:
         out[c["id"]] = {
             "name": f"{c['acc']} · {c['acr'] or c['name']}" if c["acr"] else f"{c['acc']} · {_clip(c['name'], 48)}",
-            "url": c["url"],
-            "doi": c["doi"],
+            "lib": c["lib"], "file": f"{c['acc']}.json", "doi": c["doi"],
+            "tables": c["table_libs"],
         }
     return out
 

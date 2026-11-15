@@ -293,6 +293,9 @@ _PSI_BROWSER_HTML = """
   .psi-meta a { color: #6FA3D8; text-decoration: none; }
   .psi-meta a:hover { text-decoration: underline; }
   .psi-actions { margin-top: 4px; }
+  .psi-lib { all: unset; cursor: pointer; color: #6FA3D8; font: 500 11.5px var(--font-ui); }
+  .psi-lib:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .psi-lib:focus-visible { outline: 2px solid #6FA3D8; outline-offset: 2px; }
 </style>
 <div class="psi-browser">
   <div class="psi-toolbar">
@@ -2595,8 +2598,11 @@ def render_live_mission_control() -> None:
     const classNotes = (a.if_fire && a.if_fire.class_notes && a.if_fire.class_notes.length)
       ? `<div style="margin-top:4px;font-size:12px;color:#FFC27A;">${{a.if_fire.class_notes.join(" ")}}</div>`
       : "";
+    const srcBtn = (lib, label) =>
+      `<button type="button" class="flama-src" data-lib="${{lib}}" style="all:unset;cursor:pointer;color:#6FA3D8;text-decoration:underline;margin-right:10px;font-family:var(--font-ui);font-size:11px;">${{label}}</button>`;
     const sourcesLinks = (a.sources || []).map((s) =>
-      `<a href="${{s.url}}" target="_blank" rel="noopener" style="color:#6FA3D8;text-decoration:underline;margin-right:10px;font-family:var(--font-ui);font-size:11px;">[${{s.name}}]</a>`
+      (s.lib ? srcBtn(s.lib, `[${{s.name}}]`) : `<span style="margin-right:10px;font-size:11px;">[${{s.name}}]</span>`) +
+      (s.tables || []).map((t, i) => srcBtn(t, (s.tables.length > 1 ? `table ${{i + 1}}` : "table"))).join("")
     ).join(" ");
 
     return `
@@ -3108,7 +3114,9 @@ def render_live_mission_control() -> None:
           '<div class="psi-blurb">' + c.blurb + "</div>" +
           '<div class="psi-meta"><span>' + (c.hardware || "—") + "</span>" +
           "<span>" + c.tables + (c.tables === 1 ? " TABLE" : " TABLES") + " · " + c.rows + " ROWS</span>" +
-          (c.doi ? '<a href="' + c.url + '" target="_blank" rel="noopener">DOI ' + c.doi + "</a>" : "") + "</div>" +
+          (c.doi ? "<span>DOI " + c.doi + "</span>" : "") + "</div>" +
+          '<div class="psi-meta"><button type="button" class="flama-src psi-lib" data-lib="' + c.lib + '">Open record</button>' +
+          (c.table_libs || []).map((t, i) => '<button type="button" class="flama-src psi-lib" data-lib="' + t + '">' + ((c.table_libs.length > 1) ? "Table " + (i + 1) : "Open data table") + "</button>").join("") + "</div>" +
           '<div class="psi-actions"><button class="switch-bubble-btn press-able psi-observe" data-exp="' + c.id + '">INSPECT WITH FLAMMY →</button></div>' +
           "</div>";
       }}).join("");
@@ -3218,6 +3226,14 @@ def render_live_mission_control() -> None:
     const d = e.detail || {{}};
     postFlammyEvent({{ type: "question", question: d.pregunta || "", answer: d.respuesta || "" }}, {{ forceShow: true }});
   }});
+  // Any internal source button (Flammy advisories, PSI cards...) opens that database file in the library
+  document.addEventListener("click", (e) => {{
+    const b = e.target.closest(".flama-src[data-lib]");
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    window.dispatchEvent(new CustomEvent("flama:abrir-archivo", {{ detail: {{ archivo: b.dataset.lib }} }}));
+  }}, true);
+
   // AI citation -> preview the exact database file in the library (Bubble 1)
   window.addEventListener("flama:abrir-archivo", (e) => {{
     const d = e.detail || {{}};

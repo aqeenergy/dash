@@ -202,3 +202,7 @@
 .s3-assume p { font: 400 12.5px/1.5 var(--font-ui); color: #A3A29D; margin-top: 8px; text-wrap: pretty; }
 .s3-assume b { color: var(--flare-200); font-weight: 600; }
 .s3-assume code { font-family: var(--font-data); font-size: 11px; color: var(--paper-50); }
+.s3-lib { all: unset; cursor: pointer; display: block; color: var(--sky-400); font-size: 12.5px; margin-bottom: 2px; }
+.s3-lib + .s3-lib { color: var(--sky-200); font-size: 12px; }
+.s3-lib:hover { text-decoration: underline; text-underline-offset: 3px; }
+.s3-lib:focus-visible { outline: 2px solid var(--sky-400); outline-offset: 2px; }

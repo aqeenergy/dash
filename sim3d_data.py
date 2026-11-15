@@ -81,9 +81,19 @@ def _curated() -> dict[str, Any]:
     return {}
 
 
-def _src(acc: str, detail: str) -> dict[str, str]:
+def _lib_id(name: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("_")
+
+
+def _src(acc: str, detail: str, table: str | None = None) -> dict[str, str]:
+    """Internal reference: the PSI record and, when the value comes from one, the exact table
+    (both opened in the app's database library, never on the web)."""
     m = _meta(acc)
-    return {"kind": "psi", "acc": acc, "label": f"{acc} · {m['acr'] or m['title']}", "doi": m["doi"], "url": m["url"], "detail": detail}
+    out = {"kind": "psi", "acc": acc, "label": f"{acc} · {m['acr'] or m['title']}", "doi": m["doi"],
+           "lib": _lib_id(acc) + ".md", "detail": detail}
+    if table and (DB_DIR / table).exists():
+        out["table_lib"], out["table_file"] = _lib_id(Path(table).stem) + ".csv", table
+    return out
 
 
 def _concept(detail: str) -> dict[str, str]:
@@ -122,13 +132,13 @@ def habitats() -> dict[str, Any]:
 
     iss_p = iss["kpa"] or 101.3
     iss_p_src = (_src("PSI-69", f"Median ambient pressure of {iss['n']} air-composition FLEX runs aboard the ISS: "
-                                 f"{iss['mmhg']} mmHg = {iss['kpa']} kPa.")
+                                 f"{iss['mmhg']} mmHg = {iss['kpa']} kPa.", "PSI-69_Experimental table_FLEX.csv")
                  if iss["kpa"] else _concept("Sea-level pressure assumed."))
-    iss_o2_src = _src("PSI-98", f"Cabin-air O2 measured during Saffire-I: {saffire_o2} %.") if saffire_o2 else _concept("21 % assumed.")
+    iss_o2_src = _src("PSI-98", f"Cabin-air O2 measured during Saffire-I: {saffire_o2} %.", "PSI-98_Experimental table_SAFFIRE-1.csv") if saffire_o2 else _concept("21 % assumed.")
 
     if fm2:
         expl = {"o2": fm2["o2"], "kpa": fm2["kpa"]}
-        expl_src = {"kind": "psi-file", "label": "base_de_datos · experiments.json.py (FM2)",
+        expl_src = {"kind": "psi-file", "label": "base_de_datos · experiments.json.py (FM2)", "lib": "experiments.json.py.txt",
                     "detail": f"FM2 note: “{fm2['note']}” → {fm2['o2']:.0f} % O2 at {fm2['psia']} psia = {fm2['kpa']} kPa."}
     else:
         expl, expl_src = {"o2": 34.0, "kpa": 56.5}, _concept("Exploration atmosphere assumed (34 % O2, 56.5 kPa).")
@@ -142,7 +152,7 @@ def habitats() -> dict[str, Any]:
                                 "o2": _concept("Gateway cabin atmosphere is not in base_de_datos; ISS-like air shown."),
                                 "kpa": _concept("Gateway cabin pressure is not in base_de_datos; ISS-like value shown.")}},
         "lunar": {"name": "Lunar Base", "sub": "Surface · 0.16 g", "g": 0.16, "o2": expl["o2"], "kpa": expl["kpa"],
-                  "sources": {"g": {"kind": "psi-file", "label": "base_de_datos · experiments.json.py (FM2)",
+                  "sources": {"g": {"kind": "psi-file", "label": "base_de_datos · experiments.json.py (FM2)", "lib": "experiments.json.py.txt",
                                     "detail": "FM2 studies how materials burn at 1/6 g."},
                               "o2": expl_src, "kpa": expl_src}},
         "mars": {"name": "Mars Base", "sub": "Surface · 0.38 g", "g": 0.38, "o2": expl["o2"], "kpa": expl["kpa"],
@@ -228,13 +238,13 @@ def evidence() -> dict[str, Any]:
             "table": {"cols": ["Run", "Material", "Flow", "O₂ %", "Burn time", "Direction"],
                       "rows": [[f"{s['acc']} {s['sample']}", s["material"], s["flow"], s["o2"], s["burn"], s["dir"]] for s in saff[:9]]},
             "note": "The simulated flame is CONCEPTUAL: its size and heat release are not fitted to these runs.",
-            "sources": [_src("PSI-98", "Saffire-I table"), _src("PSI-99", "Saffire-II table")],
+            "sources": [_src("PSI-98", "Saffire-I table", "PSI-98_Experimental table_SAFFIRE-1.csv"), _src("PSI-99", "Saffire-II table", "PSI-99_Experimental table_SAFFIRE-2.csv")],
         },
         "vent": {
             "title": "Forced ventilation (inlet)",
             "body": "With no buoyancy in 0 g, forced flow is the dominant oxidizer transport. " + fl["source"],
             "facts": [["Slider range", f"0–{fl['max']:.0f} cm/s"], ["Saffire flows", ", ".join(f"{v:.0f} cm/s" for v in fl["marks"])]],
-            "sources": [_src("PSI-25", "BASS-II flow range"), _src("PSI-98", "Saffire-I air flow"), _src("PSI-100", "Saffire-III air flow")],
+            "sources": [_src("PSI-25", "BASS-II flow range (stated in LEEME_datos_PSI.md)"), _src("PSI-98", "Saffire-I air flow", "PSI-98_Experimental table_SAFFIRE-1.csv"), _src("PSI-100", "Saffire-III air flow", "PSI-100_Experimental table_SAFFIRE-3.csv")],
         },
         "sensor": {
             "title": "Smoke detection",
@@ -242,7 +252,7 @@ def evidence() -> dict[str, Any]:
             "facts": [["Materials", ", ".join(f"{k} ({v})" for k, v in sorted(sm_types.items(), key=lambda kv: -kv[1]))],
                       ["Inlet velocities", ", ".join(f"{v:g} cm/s" for v in sm_v)]],
             "note": "The smoke field in the simulator is a CONCEPTUAL tracer, not SAME-R particle data.",
-            "sources": [_src("PSI-101", "SAME-R table")],
+            "sources": [_src("PSI-101", "SAME-R table", "PSI-101_Experimental table_SAME-R.csv")],
         },
         "atmosphere": {
             "title": "Atmosphere & oxygen",
@@ -252,7 +262,7 @@ def evidence() -> dict[str, Any]:
                       ["FLEX diluent runs", f"He: {fx_he} · CO₂: {fx_co2}"],
                       ["BASS-II initial O₂", f"{o2s[0]:.1f}–{o2s[-1]:.1f} % vol ({len(o2s)} runs)" if o2s else "n/a"]],
             "note": "The O₂ heat map shows RELATIVE depletion predicted by the visualization model, not measured O₂.",
-            "sources": [_src("PSI-69", "FLEX table"), _src("PSI-25", "BASS-II table")],
+            "sources": [_src("PSI-69", "FLEX table", "PSI-69_Experimental table_FLEX.csv"), _src("PSI-25", "BASS-II table", "PSI-25_Experimental table_BASS-II.csv")],
         },
         "flame": {
             "title": "Flame shape vs gravity",
@@ -260,7 +270,7 @@ def evidence() -> dict[str, Any]:
                     "Partial gravity reintroduces a weak plume; direct partial-g data are sparse, so shapes between 0 g and 1 g are interpolated.",
             "facts": [["BASS-II fuels (most tested)", "; ".join(f"{k} ({v})" for k, v in top_fuels)]],
             "note": "Partial-gravity flame geometry is a CONCEPTUAL interpolation awaiting FM2 / LUCI data.",
-            "sources": [_src("PSI-26", "BASS"), _src("PSI-25", "BASS-II"), _src("PSI-22", "E-FIELD: body-force analog of gravity")],
+            "sources": [_src("PSI-26", "BASS"), _src("PSI-25", "BASS-II fuels", "PSI-25_Experimental table_BASS-II.csv"), _src("PSI-22", "E-FIELD: body-force analog of gravity")],
         },
         "hull": {
             "title": "Capsule geometry",
