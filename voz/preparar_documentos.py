@@ -1,7 +1,7 @@
 """Convierte las fichas de metadatos del NASA PSI (PSI-XX.json) en documentos Markdown
 que la IA puede buscar: título, DOI, objetivos, enfoque, hipótesis, impacto y publicaciones.
 
-    python preparar_documentos.py        # escribe en ia_voz_texto/documentos/psi/
+    python preparar_documentos.py        # escribe en voz/documentos/psi/
     python ingestar.py                   # después, construir el índice
 
 Hay que ejecutarlo solo una vez (o cuando se actualicen las fichas del PSI).

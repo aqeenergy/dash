@@ -89,10 +89,3 @@
 #ia-minimizar .ia-chev { transition: transform var(--dur-fast) var(--ease-smooth); transform-origin: 12px 12px; }
 #ia-minimizar[aria-expanded="false"] .ia-chev { transform: rotate(180deg); }
 #ia-minimizar[aria-expanded="false"] { color: var(--sky-200); border-color: var(--sky-600); }
-
-/* charts and documents created by the AI server */
-.ia-grafica { margin: 10px 0 0; }
-.ia-grafica img { display: block; max-width: 100%; border-radius: 10px; border: 1px solid var(--space-700); background: #fff; }
-.ia-grafica figcaption { margin-top: 5px; font: 500 12px var(--font-ui); color: #8A909A; }
-.ia-docs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
-.ia-docs-t { font: 600 13px var(--font-ui); color: var(--paper-50); margin-right: 4px; }

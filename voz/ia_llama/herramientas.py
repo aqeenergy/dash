@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import json
-import re
 import logging
 from functools import lru_cache
 
-from . import config, datos, documentos, escenarios, graficas
+from . import config, datos
 from .rag import Indice
 
 log = logging.getLogger(__name__)
@@ -111,113 +110,12 @@ DECLARACIONES = [
     },
 ]
 
-DECLARACIONES += [
-    {
-        "name": "listar_documentos",
-        "description": (
-            "Lista los documentos disponibles: los que ha SUBIDO el usuario, las fichas de investigación "
-            "del PSI y los documentos que has creado tú. Úsala cuando el usuario mencione un documento "
-            "que ha subido ('el PDF que te he pasado', 'mi informe') para saber su nombre exacto."
-        ),
-    },
-    {
-        "name": "leer_documento",
-        "description": (
-            "Lee el texto completo de un documento por partes (para resumirlo, revisarlo o responder "
-            "sobre él entero). Si partes_totales > 1, pide las siguientes partes. Para buscar un dato "
-            "concreto es más rápido buscar_documentos."
-        ),
-        "parameters": {
-            "type": "OBJECT",
-            "properties": {
-                "nombre": {"type": "STRING", "description": "Nombre del documento, tal como sale en listar_documentos."},
-                "parte": {"type": "INTEGER", "description": "Parte a leer, empezando por 1."},
-            },
-            "required": ["nombre"],
-        },
-    },
-    {
-        "name": "crear_documento",
-        "description": (
-            "Crea un documento descargable (Markdown, Word y PDF) cuando el usuario pida un informe, "
-            "resumen, ficha, lista de recomendaciones o similar. Es la ÚNICA forma de crear un archivo: "
-            "si no la llamas, no existe ningún documento. Antes, consulta los datos necesarios. "
-            "El contenido va en Markdown (# títulos, - viñetas, **negrita**) y debe terminar con una "
-            "sección '## Fuentes' con la investigación, la accesión PSI y el DOI de lo consultado."
-        ),
-        "parameters": {
-            "type": "OBJECT",
-            "properties": {
-                "titulo": {"type": "STRING"},
-                "contenido": {"type": "STRING", "description": "Texto completo del documento en Markdown."},
-            },
-            "required": ["titulo", "contenido"],
-        },
-    },
-]
-
-DECLARACIONES += [
-    {
-        "name": "evaluar_escenario",
-        "description": (
-            "Para preguntas de riesgo o '¿qué pasaría si...?' sobre un incendio (un material o combustible "
-            "con cierto oxígeno, ventilación o presión): busca los ensayos reales del NASA PSI más parecidos "
-            "(Saffire, BASS, SAME, FLEX, CFI, CFI-G) y devuelve qué pasó en ellos, qué condiciones se "
-            "ensayaron y si el escenario queda fuera de lo ensayado. Rellena solo lo que diga el usuario."
-        ),
-        "parameters": {
-            "type": "OBJECT",
-            "properties": {
-                "material": {"type": "STRING", "description": "Material o combustible (en español o inglés): algodón, PMMA, Nomex, silicona, heptano, metanol, propano..."},
-                "oxigeno_pct": {"type": "NUMBER", "description": "Oxígeno en % (el aire normal es 21)."},
-                "flujo_aire_cm_s": {"type": "NUMBER", "description": "Velocidad del aire en cm/s (ventilación)."},
-                "presion_atm": {"type": "NUMBER", "description": "Presión en atmósferas (1 = nivel del mar)."},
-                "tipo": {"type": "STRING", "enum": ["solido", "liquido", "gas"]},
-            },
-        },
-    },
-]
-
-DECLARACIONES += [
-    {
-        "name": "crear_grafica",
-        "description": (
-            "Dibuja una gráfica de una tabla para mostrarla en pantalla cuando pidan verla, compararla o "
-            "visualizarla ('enséñame...', 'haz una gráfica...'). Tipos: 'barras' = media de y por grupo "
-            "(agrupar_por obligatorio, p. ej. Fuel); 'dispersion' = y frente a x (x obligatorio), con hasta "
-            "3 grupos de color; 'histograma' = cómo se reparten los valores de y."
-        ),
-        "parameters": {
-            "type": "OBJECT",
-            "properties": {
-                "tabla": {"type": "STRING"},
-                "tipo": {"type": "STRING", "enum": list(graficas.TIPOS)},
-                "y": {"type": "STRING", "description": "Columna numérica a dibujar."},
-                "x": {"type": "STRING", "description": "Columna del eje horizontal (solo dispersión)."},
-                "agrupar_por": {"type": "STRING", "description": "Columna de grupos (obligatoria en barras)."},
-                "filtros": _FILTROS,
-                "titulo": {"type": "STRING", "description": "Título en español (opcional)."},
-            },
-            "required": ["tabla", "tipo", "y"],
-        },
-    },
-]
-
 HERRAMIENTAS_GEMINI = [{"function_declarations": DECLARACIONES}]
 
 
 @lru_cache(maxsize=1)
 def indice() -> Indice:
-    """Índice de búsqueda: fichas PSI y documentos base, más los documentos subidos desde la web."""
-    base = Indice.cargar()
-    if (config.DIR_INDICE_SUBIDOS / "fragmentos.json").exists():
-        base = base.unir(Indice.cargar(config.DIR_INDICE_SUBIDOS))
-    return base
-
-
-def recargar_indice() -> None:
-    """Tras subir un documento: la siguiente búsqueda ya lo incluye."""
-    indice.cache_clear()
+    return Indice.cargar()
 
 
 def precargar() -> None:
@@ -241,112 +139,7 @@ FUNCIONES = {
     "describir_tabla": datos.describir_tabla,
     "consultar_tabla": datos.consultar_tabla,
     "estadisticas_tabla": datos.estadisticas_tabla,
-    "listar_documentos": documentos.listar,
-    "leer_documento": documentos.leer,
-    "crear_documento": documentos.crear,
-    "evaluar_escenario": escenarios.evaluar,
-    "crear_grafica": graficas.crear,
 }
-
-
-# ----------------------------------------------------------------------------- citas para la web
-
-def _base_cita(nombre_fuente: str) -> dict:
-    """Datos de la investigación PSI a partir de un nombre que empiece por PSI-XX (tabla o documento)."""
-    base = nombre_fuente.rsplit("/", 1)[-1]
-    f = datos._ficha_psi(base)
-    if not f:
-        return {"investigacion": None, "accesion": None, "titulo": None, "doi": None, "url": None}
-    doi = f.get("doi") or None
-    return {
-        "investigacion": f.get("investigationAcronym") or f["accession"],
-        "accesion": f["accession"],
-        "titulo": f.get("title"),
-        "doi": doi,
-        "url": f"https://doi.org/{doi}" if doi else None,
-    }
-
-
-def _describir_consulta(argumentos: dict) -> str:
-    partes = []
-    if argumentos.get("columnas"):
-        partes.append("columnas: " + ", ".join(map(str, argumentos["columnas"])))
-    if argumentos.get("agrupar_por"):
-        partes.append(f"agrupado por {argumentos['agrupar_por']}")
-    for f in argumentos.get("filtros") or []:
-        partes.append(f"{f.get('columna')} {f.get('operador', '==')} {f.get('valor')}")
-    if argumentos.get("ordenar_por"):
-        partes.append(f"ordenado por {argumentos['ordenar_por']}" + (" (desc.)" if argumentos.get("descendente") else ""))
-    return "; ".join(partes)
-
-
-def citas(nombre: str, argumentos: dict | None, resultado: dict) -> list[dict]:
-    """Referencias estructuradas de lo que la IA ha consultado, para mostrarlas en la web.
-    Una cita por documento o tabla realmente usado (las consultas que dieron error no cuentan)."""
-    argumentos = argumentos or {}
-    if not isinstance(resultado, dict) or "error" in resultado:
-        return []
-    if nombre == "buscar_documentos":
-        salida = []
-        for r in resultado.get("resultados", []):
-            texto = r.get("texto", "")
-            if texto.startswith("[") and "]\n" in texto[:200]:
-                texto = texto.split("]\n", 1)[1]  # quitar el título que se añade a cada fragmento
-            salida.append({"tipo": "documento", **_base_cita(r["fuente"]), "fuente": r["fuente"],
-                           "pagina": r.get("pagina"), "extracto": " ".join(texto.split())[:300]})
-        return salida
-    if nombre == "evaluar_escenario":
-        esc = {k: v for k, v in (resultado.get("escenario") or {}).items() if v not in (None, "", [])
-               and k != "terminos_buscados"}
-        consulta = "escenario: " + ", ".join(f"{k}={v}" for k, v in esc.items())
-        return [{"tipo": "tabla", **_base_cita(r["tabla"]), "tabla": r["tabla"], "consulta": consulta,
-                 "filas": r.get("ensayos_coincidentes")} for r in resultado.get("resultados", [])]
-    if nombre == "crear_grafica":
-        return [{"tipo": "tabla", **_base_cita(resultado.get("tabla", "")), "tabla": resultado.get("tabla"),
-                 "consulta": f"gráfica ({resultado.get('tipo')}): " + _describir_consulta(
-                     {k: v for k, v in argumentos.items() if k in ("filtros",)} | {
-                         "columnas": [c for c in (argumentos.get("y"), argumentos.get("x")) if c],
-                         "agrupar_por": argumentos.get("agrupar_por")}),
-                 "filas": (resultado.get("resumen") or {}).get("ensayos")}]
-    if nombre == "leer_documento":
-        doc = resultado.get("documento", "")
-        return [{"tipo": "documento", **_base_cita(doc), "fuente": doc, "pagina": None,
-                 "parte": resultado.get("parte"), "extracto": " ".join(resultado.get("texto", "").split())[:300]}]
-    if nombre in ("consultar_tabla", "estadisticas_tabla", "describir_tabla"):
-        tabla = resultado.get("tabla") or argumentos.get("tabla", "")
-        cita = {"tipo": "tabla", **_base_cita(tabla), "tabla": tabla,
-                "consulta": _describir_consulta(argumentos) if nombre != "describir_tabla" else "descripción de la tabla"}
-        if nombre == "consultar_tabla":
-            cita["filas"] = resultado.get("filas_que_cumplen")
-        elif nombre == "estadisticas_tabla":
-            cita["filas"] = resultado.get("filas_usadas")
-        return [cita]
-    return []  # listar_tablas no aporta datos que citar
-
-
-_DOI = re.compile(r"\b10\.\d{4,9}/[^\s\"'<>\\]+")
-_CIFRAS = "cero uno dos tres cuatro cinco seis siete ocho nueve".split()
-_LETRAS = dict(zip("abcdefghijklmnopqrstuvwxyz",
-                   ["a", "be", "ce", "de", "e", "efe", "ge", "hache", "i", "jota", "ka", "ele", "eme", "ene",
-                    "o", "pe", "cu", "erre", "ese", "te", "u", "uve", "uve doble", "equis", "i griega", "zeta"]))
-_SIGNOS = {".": "punto", "/": "barra", "-": "guion", "_": "guion bajo", "(": "abre paréntesis",
-           ")": "cierra paréntesis", ":": "dos puntos", ";": "punto y coma"}
-
-
-def doi_hablado(doi: str) -> str:
-    """'10.60555/9kbh-e962' -> 'diez punto seis cero cinco cinco cinco barra nueve ka be hache guion e nueve seis dos'.
-    Los modelos de voz se saltan cifras al deletrear de memoria; así lo leen tal cual."""
-    prefijo, _, resto = doi.partition(".")
-    palabras = ["diez" if prefijo == "10" else " ".join(_CIFRAS[int(c)] for c in prefijo), "punto"]
-    for c in resto.lower():
-        palabras.append(_CIFRAS[int(c)] if c.isdigit() else _LETRAS.get(c) or _SIGNOS.get(c, c))
-    return " ".join(palabras)
-
-
-def _dois_en_voz(resultado) -> dict:
-    texto = json.dumps(resultado, ensure_ascii=False, default=str)
-    dois = dict.fromkeys(d.rstrip(".,;)") for d in _DOI.findall(texto))
-    return {d: doi_hablado(d) for d in list(dois)[:10]}
 
 
 def ejecutar(nombre: str, argumentos: dict | None) -> dict:
@@ -362,13 +155,8 @@ def ejecutar(nombre: str, argumentos: dict | None) -> dict:
         mensaje = e.args[0] if isinstance(e, KeyError) and e.args else str(e)
         return {"error": mensaje}
     # Red de seguridad: que una respuesta enorme no sature el contexto del modelo
-    texto = json.dumps({k: v for k, v in resultado.items() if k != "datos"} if isinstance(resultado, dict)
-                       else resultado, ensure_ascii=False, default=str)
+    texto = json.dumps(resultado, ensure_ascii=False, default=str)
     if len(texto) > 20000:
-        resultado = {"aviso": "Resultado recortado por tamaño; pide menos filas o filtra más.",
-                     "resultado_parcial": texto[:20000]}
-    if isinstance(resultado, dict) and nombre != "crear_grafica":
-        dois = _dois_en_voz({k: v for k, v in resultado.items() if k != "datos"})
-        if dois:
-            resultado["dois_en_voz"] = dois
+        return {"aviso": "Resultado recortado por tamaño; pide menos filas o filtra más.",
+                "resultado_parcial": texto[:20000]}
     return resultado

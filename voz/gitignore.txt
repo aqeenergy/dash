@@ -9,12 +9,3 @@ grabaciones/
 
 # Audio de prueba_rapida.py
 respuesta.wav
-
-# Documentos subidos desde la web y documentos creados por la IA (no subir)
-documentos_subidos/
-indice_subidos/
-documentos_generados/
-graficas/
-
-# Informes del banco de pruebas
-evaluaciones/

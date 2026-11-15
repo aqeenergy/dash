@@ -17,13 +17,8 @@ Eventos que emite (diccionarios):
     {"tipo": "herramienta", "nombre": "...", "argumentos": {...}}  la IA está consultando datos
     {"tipo": "resultado_herramienta", "nombre": "...", "resumen": "..."}  qué devolvió (recortado)
     {"tipo": "fuentes", "fuentes": [{"fuente": ..., "pagina": ...}]}  documentos usados
-    {"tipo": "grafica", "turno": n, "titulo": "...", "url": "/ia/graficas/...png", "datos": {...}}
-    {"tipo": "documento_creado", "turno": n, "titulo": "...", "archivos": [{"formato", "nombre", "url"}]}
-    {"tipo": "cita", "turno": n, "id": k, "cita": {...}}  referencia de lo consultado para la respuesta n
-        cita = {tipo: "tabla"|"documento", investigacion, accesion, titulo, doi, url,
-                tabla, consulta, filas  |  fuente, pagina, extracto}
-    {"tipo": "interrumpido", "turno": n}   la persona habló encima: hay que VACIAR el audio pendiente
-    {"tipo": "turno_completo", "turno": n}   la IA terminó la respuesta n (las citas de n ya han llegado)
+    {"tipo": "interrumpido"}       la persona habló encima: hay que VACIAR el audio pendiente
+    {"tipo": "turno_completo"}     la IA terminó de hablar
     {"tipo": "aviso", "mensaje": "..."}   algo pasa pero se está resolviendo solo (límite, modelo de reserva...)
     {"tipo": "reconectando"}
     {"tipo": "diagnostico", ...}         información técnica (p. ej. una respuesta atascada); la web puede ignorarlo
@@ -35,9 +30,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import re
 import time
-import unicodedata
 from typing import Awaitable, Callable
 
 from google import genai
@@ -49,34 +42,6 @@ from .prompt import INSTRUCCIONES
 log = logging.getLogger(__name__)
 
 _FIN = object()
-
-
-def _normalizar(texto: str) -> str:
-    texto = unicodedata.normalize("NFKD", texto.lower())
-    return "".join(c for c in texto if not unicodedata.combining(c))
-
-
-# Frases con las que la IA afirma haber hecho algo que exige una herramienta (sin tildes, en minúsculas)
-_AFIRMACIONES = {
-    "crear_documento": re.compile(
-        r"\b(he|te he|ya he|acabo de|hemos) (creado|preparado|generado|redactado|elaborado|hecho|escrito)\b"
-        r"[^.?!]{0,60}\b(informe|documento|resumen|pdf|word|archivo|ficha|report)"
-        r"|\b(informe|documento)\b[^.?!]{0,40}\b(esta|ya esta) (listo|creado|disponible)"
-        r"|\bi('ve| have) (created|prepared|generated|written)\b[^.?!]{0,60}\b(report|document|summary)"),
-    "crear_grafica": re.compile(
-        r"\bte la (muestro|enseno)\b|\baqui tienes (la|una) grafica"
-        r"|\b(he|te he|ya he) (creado|generado|hecho|preparado|dibujado) (una|la|esta) grafica"),
-}
-
-# Aviso privado a la IA cuando afirma algo que no ha hecho
-_CORRECCION = {
-    "crear_documento": ("(Aviso interno, no lo menciones: has dicho que has creado el documento, pero no has "
-                        "llamado a crear_documento, así que no existe. Llama ahora a crear_documento con el texto "
-                        "completo en Markdown y después confirma en una frase que ya está.)"),
-    "crear_grafica": ("(Aviso interno, no lo menciones: has dicho que muestras una gráfica, pero no has llamado "
-                      "a crear_grafica, así que no se ve nada. Llama ahora a crear_grafica y después comenta "
-                      "en una frase lo que se ve.)"),
-}
 
 
 def configuracion_live(handle_reanudacion: str | None = None) -> types.LiveConnectConfig:
@@ -118,15 +83,6 @@ class SesionVoz:
         self._ultimo_tipo = ""
         self._toques = 0
         self._fin_audio_previsto = 0.0  # cuándo terminaría de sonar el audio recibido
-        # Citas: cada respuesta de la IA es un "turno" numerado; sus citas llevan ese número
-        self._turno = 1
-        self._num_cita = 0
-        self._citas_turno: set = set()
-        # Verificador de acciones: lo que la IA ha dicho y las herramientas que ha usado en esta pregunta
-        self._dicho: list[str] = []
-        self._usadas: set[str] = set()
-        self._corregido = False
-        self._nueva_pregunta = True
 
     # ------------------------------------------------------------------ API pública
     async def enviar_audio(self, pcm16_16khz: bytes) -> None:
@@ -248,15 +204,11 @@ class SesionVoz:
         enviar = asyncio.create_task(self._enviar(sesion))
         recibir = asyncio.create_task(self._recibir(sesion))
         vigilar = asyncio.create_task(self._vigilar(sesion))
-        tareas = {enviar, recibir, vigilar}
-        try:
-            hechas, _ = await asyncio.wait(tareas, timeout=timeout, return_when=asyncio.FIRST_COMPLETED)
-        finally:
-            # Aunque nos cancelen desde fuera, ninguna tarea queda huérfana ni con errores sin recoger
-            for t in tareas:
-                if not t.done():
-                    t.cancel()
-            await asyncio.gather(*tareas, return_exceptions=True)
+        hechas, pendientes = await asyncio.wait(
+            {enviar, recibir, vigilar}, timeout=timeout, return_when=asyncio.FIRST_COMPLETED
+        )
+        for t in pendientes:
+            t.cancel()
         for t in hechas:  # propaga errores de conexión para que ejecutar() reconecte
             if not t.cancelled() and t.exception():
                 raise t.exception()
@@ -301,7 +253,6 @@ class SesionVoz:
             elif tipo == "fin_audio":
                 await sesion.send_realtime_input(audio_stream_end=True)
             elif tipo == "texto":
-                self._empezar_pregunta()
                 await sesion.send_realtime_input(text=dato)
 
     async def _recibir(self, sesion) -> None:
@@ -334,14 +285,10 @@ class SesionVoz:
             self._respondiendo = False
         if sc.interrupted:
             self._respondiendo = False
-            await self._emitir({"tipo": "interrumpido", "turno": self._turno})
-            self._nuevo_turno()
+            await self._emitir({"tipo": "interrumpido"})
         if sc.input_transcription and sc.input_transcription.text:
-            if self._nueva_pregunta:
-                self._empezar_pregunta()
             await self._emitir({"tipo": "transcripcion_usuario", "texto": sc.input_transcription.text})
         if sc.output_transcription and sc.output_transcription.text:
-            self._dicho.append(sc.output_transcription.text)
             await self._emitir({"tipo": "transcripcion_ia", "texto": sc.output_transcription.text})
         if sc.model_turn:
             for parte in sc.model_turn.parts or []:
@@ -355,36 +302,7 @@ class SesionVoz:
                         log.exception("Error entregando audio")
         if sc.turn_complete:
             self._respondiendo, self._toques = False, 0
-            falta = self._accion_no_hecha()
-            if falta:
-                self._corregido = True
-                log.info("La IA dijo que usó %s sin llamarla; se le pide que lo haga", falta)
-                await self._emitir({"tipo": "diagnostico", "suceso": "accion_no_realizada", "herramienta": falta})
-            else:
-                self._nueva_pregunta = True
-            await self._emitir({"tipo": "turno_completo", "turno": self._turno})
-            self._nuevo_turno()
-            if falta:
-                await sesion.send_realtime_input(text=_CORRECCION[falta])
-
-    def _empezar_pregunta(self) -> None:
-        self._dicho, self._usadas = [], set()
-        self._corregido, self._nueva_pregunta = False, False
-
-    def _accion_no_hecha(self) -> str | None:
-        """Si la IA ha dicho que ha creado un documento o una gráfica sin llamar a la herramienta,
-        devuelve el nombre de esa herramienta (una sola corrección por pregunta)."""
-        if not config.VERIFICAR_ACCIONES or self._corregido:
-            return None
-        texto = _normalizar(" ".join(self._dicho))
-        for herramienta, patron in _AFIRMACIONES.items():
-            if herramienta not in self._usadas and patron.search(texto):
-                return herramienta
-        return None
-
-    def _nuevo_turno(self) -> None:
-        self._turno += 1
-        self._citas_turno = set()
+            await self._emitir({"tipo": "turno_completo"})
 
     async def _atender_herramientas(self, sesion, llamadas) -> None:
         self._respondiendo, self._en_herramienta = True, True
@@ -397,30 +315,15 @@ class SesionVoz:
     async def _atender_herramientas_(self, sesion, llamadas) -> None:
         async def una(fc) -> types.FunctionResponse:
             argumentos = dict(fc.args or {})
-            self._usadas.add(fc.name)
             await self._emitir({"tipo": "herramienta", "nombre": fc.name, "argumentos": argumentos})
             # En un hilo aparte: pandas o los embeddings no deben bloquear el audio
             resultado = await asyncio.to_thread(herramientas.ejecutar, fc.name, argumentos)
-            if fc.name == "crear_grafica" and resultado.get("url"):
-                # los datos en bruto van solo a la web (para dibujarla interactiva o como tabla), no a Gemini
-                await self._emitir({"tipo": "grafica", "turno": self._turno, "titulo": resultado.get("titulo"),
-                                    "url": resultado["url"], "datos": resultado.pop("datos", None)})
             resumen = json.dumps(resultado, ensure_ascii=False, default=str)
             await self._emitir({"tipo": "resultado_herramienta", "nombre": fc.name,
                                 "resumen": resumen[:600] + ("…" if len(resumen) > 600 else "")})
             if fc.name == "buscar_documentos" and resultado.get("resultados"):
                 fuentes = [{"fuente": r["fuente"], "pagina": r["pagina"]} for r in resultado["resultados"]]
                 await self._emitir({"tipo": "fuentes", "fuentes": fuentes})
-            if fc.name == "crear_documento" and resultado.get("archivos"):
-                await self._emitir({"tipo": "documento_creado", "turno": self._turno,
-                                    "titulo": resultado.get("titulo"), "archivos": resultado["archivos"]})
-            for cita in herramientas.citas(fc.name, argumentos, resultado):
-                clave = (cita.get("tipo"), cita.get("tabla") or cita.get("fuente"), cita.get("consulta"), cita.get("pagina"))
-                if clave in self._citas_turno:
-                    continue  # la misma fuente dos veces en una respuesta: una sola cita
-                self._citas_turno.add(clave)
-                self._num_cita += 1
-                await self._emitir({"tipo": "cita", "turno": self._turno, "id": self._num_cita, "cita": cita})
             return types.FunctionResponse(id=fc.id, name=fc.name, response=resultado)
 
         # Si Gemini pide varias consultas a la vez, se ejecutan en paralelo (mismo orden en la respuesta)

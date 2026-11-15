@@ -202,24 +202,6 @@
         }
         break;
       }
-      case "grafica": {   // chart drawn by the AI from a database table (PNG served by the AI server)
-        const t = turno(ev.turno);
-        const fig = document.createElement("figure"); fig.className = "ia-grafica";
-        fig.innerHTML = `<img alt="${esc(ev.titulo || "Chart")}" src="${esc(BASE_HTTP + (ev.url || ""))}"><figcaption>${esc(ev.titulo || "")}</figcaption>`;
-        fig.querySelector("img").addEventListener("load", bajar);
-        t.el.insertBefore(fig, t.el.querySelector(".ia-pie"));
-        bajar();
-        break;
-      }
-      case "documento_creado": {   // report written by the AI: download links (Markdown, Word, PDF)
-        const t = turno(ev.turno);
-        const d = document.createElement("div"); d.className = "ia-docs";
-        d.innerHTML = `<span class="ia-docs-t">📄 ${esc(ev.titulo || "Document")}</span>` + (ev.archivos || []).map((a) =>
-          `<a class="ia-mini" href="${esc(BASE_HTTP + a.url)}" download="${esc(a.nombre)}" target="_blank" rel="noopener">${esc(String(a.formato || "").toUpperCase())}</a>`).join("");
-        t.el.insertBefore(d, t.el.querySelector(".ia-pie"));
-        bajar();
-        break;
-      }
       case "aviso": nodo("ia-aviso", esc(ev.mensaje)); break;
       case "en_pausa": estado("pausa"); break;
       case "reconectando": estado("conectando", "Reconnecting to the AI…"); break;

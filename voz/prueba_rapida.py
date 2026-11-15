@@ -19,7 +19,7 @@ PREGUNTA = " ".join(sys.argv[1:]) or "¿Qué combustible ardió más rápido en 
 async def main() -> None:
     herramientas.precargar()  # tablas e índice listos antes de la primera pregunta
     if not config.GEMINI_API_KEY:
-        sys.exit("❌ Falta GEMINI_API_KEY en ia_voz_texto/.env")
+        sys.exit("❌ Falta GEMINI_API_KEY en voz/.env")
     print(f"Modelos: {', '.join(config.MODELOS_LIVE)}\nPregunta: {PREGUNTA}\n")
     audio = bytearray()
     fin = asyncio.Event()

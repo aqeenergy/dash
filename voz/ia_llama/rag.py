@@ -23,7 +23,7 @@ from . import config
 log = logging.getLogger(__name__)
 
 EXTENSIONES_TEXTO = {".txt", ".md"}
-EXTENSIONES = EXTENSIONES_TEXTO | {".pdf", ".docx"}
+EXTENSIONES = EXTENSIONES_TEXTO | {".pdf"}
 
 
 @dataclass
@@ -43,21 +43,7 @@ def _leer_paginas(ruta: Path) -> list[tuple[int | None, str]]:
 
         lector = PdfReader(str(ruta))
         return [(i + 1, p.extract_text() or "") for i, p in enumerate(lector.pages)]
-    if ruta.suffix.lower() == ".docx":
-        from docx import Document
-
-        doc = Document(str(ruta))
-        partes = [p.text for p in doc.paragraphs]
-        for tabla in doc.tables:  # el texto de las tablas de Word también cuenta
-            for fila in tabla.rows:
-                partes.append(" | ".join(c.text.strip() for c in fila.cells))
-        return [(None, "\n\n".join(t for t in partes if t.strip()))]
     return [(None, ruta.read_text(encoding="utf-8", errors="ignore"))]
-
-
-def leer_paginas(ruta: Path) -> list[tuple[int | None, str]]:
-    """Texto de un documento por páginas, ya limpio (PDF, DOCX, TXT, MD)."""
-    return [(n, _limpiar(t)) for n, t in _leer_paginas(ruta)]
 
 
 def _limpiar(texto: str) -> str:
@@ -89,20 +75,6 @@ def trocear(texto: str, tam: int = config.TAM_FRAGMENTO, solape: int = config.SO
     if actual:
         trozos.append(actual)
     return [t for t in trozos if len(t) > 40]
-
-
-def fragmentos_de(ruta: Path, nombre: str, primer_id: int = 0) -> list[Fragmento]:
-    """Trocea un documento en fragmentos, con su título delante de cada trozo."""
-    paginas = _leer_paginas(ruta)
-    primera = next((l for _, t in paginas for l in t.splitlines() if l.strip()), "")
-    titulo = primera.lstrip("# ").strip() if primera.startswith("#") else ruta.stem
-    salida = []
-    for num_pag, texto in paginas:
-        for trozo in trocear(_limpiar(texto)):
-            if not trozo.startswith(primera.strip()):
-                trozo = f"[{titulo}]\n{trozo}"
-            salida.append(Fragmento(primer_id + len(salida), nombre, num_pag, trozo))
-    return salida
 
 
 def cargar_fragmentos(directorio: Path = config.DIR_DOCUMENTOS) -> list[Fragmento]:
@@ -260,22 +232,6 @@ class Indice:
                             config.MODELO_EMBEDDINGS, config.DIMENSION_EMBEDDINGS)
                 vectores = None
         return cls(fragmentos, vectores)
-
-    def unir(self, otro: "Indice") -> "Indice":
-        """Índice combinado (p. ej. documentos base + documentos subidos). Si a uno le faltan los
-        vectores, se rellenan con ceros: esos fragmentos se siguen encontrando por palabras clave."""
-        if not otro.fragmentos:
-            return self
-        if not self.fragmentos:
-            return otro
-        if self.vectores is None and otro.vectores is None:
-            vectores = None
-        else:
-            dim = (self.vectores if self.vectores is not None else otro.vectores).shape[1]
-            a = self.vectores if self.vectores is not None else np.zeros((len(self.fragmentos), dim), np.float32)
-            b = otro.vectores if otro.vectores is not None else np.zeros((len(otro.fragmentos), dim), np.float32)
-            vectores = np.vstack([a, b]) if a.shape[1] == b.shape[1] else None
-        return Indice(self.fragmentos + otro.fragmentos, vectores)
 
     # --- búsqueda
     def buscar(self, consulta: str, k: int = config.MAX_FRAGMENTOS) -> list[dict]:
