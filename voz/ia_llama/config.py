@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parent.parent  # carpeta voz/
+RAIZ = Path(__file__).resolve().parent.parent  # carpeta ia_voz_texto/
 REPO = RAIZ.parent  # raíz del repositorio
 
 try:  # python-dotenv es opcional
@@ -40,6 +40,17 @@ DIR_TABLAS = Path(os.getenv("DIR_TABLAS", _PSI / "tablas"))
 DIR_METADATOS = Path(os.getenv("DIR_METADATOS", _PSI / "metadatos"))
 DIR_INDICE = Path(os.getenv("DIR_INDICE", RAIZ / "indice"))
 
+# Documentos que se suben desde la web y documentos que crea la IA (no se suben a GitHub)
+DIR_SUBIDOS = Path(os.getenv("DIR_SUBIDOS", RAIZ / "documentos_subidos"))
+DIR_INDICE_SUBIDOS = Path(os.getenv("DIR_INDICE_SUBIDOS", RAIZ / "indice_subidos"))
+DIR_GENERADOS = Path(os.getenv("DIR_GENERADOS", RAIZ / "documentos_generados"))
+DIR_GRAFICAS = Path(os.getenv("DIR_GRAFICAS", RAIZ / "graficas"))
+MAX_MB_SUBIDA = float(os.getenv("MAX_MB_SUBIDA", "20"))
+MAX_CARACTERES_LECTURA = int(os.getenv("MAX_CARACTERES_LECTURA", "6000"))  # por cada parte que lee la IA
+MAX_SUBIDAS_IP_HORA = int(os.getenv("MAX_SUBIDAS_IP_HORA", "20"))
+# Webs que pueden llamar al servidor desde el navegador (subir/descargar). "*" = cualquiera (demo local)
+ORIGENES_PERMITIDOS = [o.strip() for o in os.getenv("ORIGENES_PERMITIDOS", "*").split(",") if o.strip()]
+
 # --- Troceado de documentos para el RAG ---
 TAM_FRAGMENTO = int(os.getenv("TAM_FRAGMENTO", "1200"))  # caracteres
 SOLAPE_FRAGMENTO = int(os.getenv("SOLAPE_FRAGMENTO", "200"))
@@ -53,6 +64,8 @@ CATALOGO_EN_PROMPT = os.getenv("CATALOGO_EN_PROMPT", "si").lower() in ("si", "s�
 
 # --- Respuestas atascadas: si Gemini deja de enviar a mitad de respuesta, se le da un toque ---
 SEGUNDOS_ATASCO = float(os.getenv("SEGUNDOS_ATASCO", "10"))
+# Si la IA dice que ha creado un documento o una gráfica sin llamar a la herramienta, se le pide que lo haga
+VERIFICAR_ACCIONES = os.getenv("VERIFICAR_ACCIONES", "1").lower() not in ("0", "false", "no")
 TEXTO_TOQUE = os.getenv("TEXTO_TOQUE", "(Sigue, por favor: termina la respuesta que estabas dando.)")
 
 # --- Protección de la cuota (que nadie agote el límite de todos) ---

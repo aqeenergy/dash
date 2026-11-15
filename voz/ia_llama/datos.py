@@ -264,8 +264,15 @@ def consultar_tabla(
     limite: int = 10,
 ) -> dict:
     nombre, df = _buscar_tabla(tabla)
+    filas_tabla = len(df)
     df = _aplicar_filtros(df, filtros)
     total = len(df)
+    if total == 0 and filtros:
+        return {"tabla": nombre, "filas_que_cumplen": 0, "filas_totales": filas_tabla, "filas": [],
+                "nota": (f"NO EXISTE: ninguna fila cumple esos filtros. Responde claramente que ese ensayo o valor no "
+                         f"existe en {nombre} y que la tabla tiene {filas_tabla} filas en total. No digas 'no tengo "
+                         f"datos exactos' (da a entender que existe) ni ofrezcas datos de columnas que la tabla no tiene."),
+                "columnas_de_la_tabla": [str(c) for c in df.columns]}
     if ordenar_por:
         df = df.sort_values(_buscar_columna(df, ordenar_por), ascending=not descendente)
     if columnas:
@@ -310,7 +317,8 @@ def estadisticas_tabla(
             str(k): {f"{c}_{m}": _limpio(v) for (c, m), v in fila.items()}
             for k, fila in res.iterrows()
         }
-        salida = {"tabla": nombre, "agrupado_por": str(g), "grupos": grupos, "estadisticas": datos}
+        salida = {"tabla": nombre, "agrupado_por": str(g), "grupos": grupos, "filas_usadas": len(df),
+                  "estadisticas": datos}
     else:
         res = df[cols].agg(metricas)
         datos = {str(c): {m: _limpio(res.loc[m, c]) for m in metricas} for c in cols}

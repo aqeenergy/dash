@@ -29,9 +29,11 @@ import logging
 import time
 from collections import defaultdict, deque
 
-from fastapi import APIRouter, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
-from . import config, datos, herramientas
+from . import config, datos, documentos, graficas, herramientas
 from .sesion import SesionVoz
 
 log = logging.getLogger(__name__)
@@ -78,7 +80,58 @@ def salud() -> dict:
         "fragmentos_indexados": len(herramientas.indice().fragmentos),
         "busqueda_semantica": herramientas.indice().vectores is not None,
         "tablas": list(datos.tablas()),
+        "documentos_subidos": len(documentos.listar()["subidos_por_el_usuario"]),
     }
+
+
+@router.post("/ia/documentos")
+async def subir_documento(request: Request, archivo: UploadFile = File(...)) -> dict:
+    """Sube un PDF, DOCX, TXT o MD para que la IA pueda buscar en él, leerlo y citarlo."""
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
+        request.client.host if request.client else "?")
+    if _subidas_excedidas(ip):
+        raise HTTPException(429, "Demasiadas subidas en la última hora. Prueba más tarde.")
+    limite = int(config.MAX_MB_SUBIDA * 1024 * 1024)
+    contenido = await archivo.read(limite + 1)
+    try:
+        return await asyncio.to_thread(documentos.subir, archivo.filename or "", contenido)
+    except documentos.ErrorDocumento as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/ia/documentos")
+def listar_documentos() -> dict:
+    return documentos.listar()
+
+
+@router.get("/ia/generados/{nombre}")
+def descargar_generado(nombre: str) -> FileResponse:
+    try:
+        ruta = documentos.ruta_generado(nombre)
+    except documentos.ErrorDocumento as e:
+        raise HTTPException(404, str(e)) from e
+    return FileResponse(ruta, filename=ruta.name)
+
+
+@router.get("/ia/graficas/{nombre}")
+def descargar_grafica(nombre: str) -> FileResponse:
+    try:
+        return FileResponse(graficas.ruta(nombre), media_type="image/png")
+    except graficas.ErrorGrafica as e:
+        raise HTTPException(404, str(e)) from e
+
+
+_subidas_ip: dict[str, deque] = defaultdict(deque)
+
+
+def _subidas_excedidas(ip: str) -> bool:
+    ahora, historial = time.time(), _subidas_ip[ip]
+    while historial and ahora - historial[0] > 3600:
+        historial.popleft()
+    if len(historial) >= config.MAX_SUBIDAS_IP_HORA:
+        return True
+    historial.append(ahora)
+    return False
 
 
 @router.websocket("/ws/voz")
@@ -134,4 +187,6 @@ async def ws_voz(ws: WebSocket) -> None:
 
 
 app = FastAPI(title="IA Llama en caída libre")
+# La web (Streamlit u otra) suele estar en otro puerto: permitir que suba y descargue documentos
+app.add_middleware(CORSMiddleware, allow_origins=config.ORIGENES_PERMITIDOS, allow_methods=["*"], allow_headers=["*"])
 app.include_router(router)

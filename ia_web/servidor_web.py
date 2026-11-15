@@ -1,123 +1,84 @@
-"""Servidor de la IA de voz y texto para la web FLAMA, con CITAS.
+r"""Servidor de la IA de voz y texto para la web FLAMA.
 
-Envuelve la IA de voz/ SIN modificarla:
-  * Datos: las tablas y fichas PSI se leen de base_de_datos/ (solo lectura) y el índice RAG de
-    voz/indice/ (ya construido sobre voz/documentos_psi/).
-  * Protocolo: añade a los eventos de voz/ la numeración de respuestas ("turno") y el evento
-        {"tipo": "cita", "turno": N, "id": K, "cita": {...}}
-    para cada dato consultado (ver ia_web/citas.py). turno_completo e interrumpido llevan el
-    mismo número de turno que sus citas.
-  * Instrucciones: añade a las de voz/ una regla para relacionar el escenario del astronauta
-    con la investigación PSI más cercana, sin inventar.
+voz/ es la carpeta ia_voz_texto/ del equipo (github.com/octamartinn/NASA-SPACE-APPS), SIN modificar.
+Ese servidor ya numera las respuestas ("turno") y envía las citas, gráficas y documentos creados.
+Este envoltorio solo:
+  * apunta sus datos a base_de_datos/ (solo lectura) y a su índice RAG de voz/indice/;
+  * convierte cada cita en una referencia INTERNA: el archivo exacto de la biblioteca de texto de
+    base_de_datos (ficha PSI-XX.md o la tabla .csv) que la web abre al pulsarla, sin enlaces externos;
+  * añade /ia/modo y los trabajos de Theory Lab.
 
-Arranque (desde D:\\nasa_dashboard):
-    voz\\.venv\\Scripts\\python -m uvicorn ia_web.servidor_web:app --port 8001
+Arranque (desde D:\nasa_dashboard):
+    voz\.venv\Scripts\python -m uvicorn ia_web.servidor_web:app --port 8001
 """
 from __future__ import annotations
 
-import asyncio
-import json
 import os
+import re
 import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 VOZ = RAIZ / "voz"
 sys.path.insert(0, str(VOZ))
+sys.path.insert(0, str(RAIZ))
 
 # Rutas de datos ANTES de importar ia_llama.config (setdefault: el .env puede cambiarlas)
 os.environ.setdefault("DIR_TABLAS", str(RAIZ / "base_de_datos"))
 os.environ.setdefault("DIR_METADATOS", str(RAIZ / "base_de_datos"))
-os.environ.setdefault("DIR_DOCUMENTOS", str(VOZ / "documentos_psi"))
+os.environ.setdefault("DIR_DOCUMENTOS", str(VOZ / "documentos"))
 os.environ.setdefault("DIR_INDICE", str(VOZ / "indice"))
 
-from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from google.genai import types  # noqa: E402
-
-from ia_llama import herramientas, servidor, sesion as sesion_mod  # noqa: E402
+from ia_llama import servidor  # noqa: E402
 from ia_llama.sesion import SesionVoz  # noqa: E402
 
-from ia_web.citas import citas_de, clave  # noqa: E402
+from biblioteca import _slug  # noqa: E402  (same ids as the web's text library)
 
-REGLA_ESCENARIOS = """
-
-ESCENARIOS OPERATIVOS (FLAMA)
-- Cuando el astronauta plantee un escenario (un fallo, un material que arde, una atmósfera, una gravedad),
-  identifica primero la investigación del NASA PSI más cercana a ese escenario consultando tus herramientas
-  (documentos o tablas) y nómbrala con su acrónimo y su accesión (por ejemplo "FLEX, PSI-69").
-- Basa la respuesta en lo que devuelvan las herramientas. Si ninguna investigación se parece al escenario,
-  dilo con claridad y no rellenes con datos inventados.
-- Las recomendaciones operativas (aislar, cortar ventilación, evacuar...) las da también el asistente Flammy
-  de la web: no hace falta que las repitas si no las respaldan los datos consultados.
-"""
-sesion_mod.INSTRUCCIONES = sesion_mod.INSTRUCCIONES + REGLA_ESCENARIOS
-
-_ABREN = {"transcripcion_ia", "herramienta", "resultado_herramienta", "cita", "fuentes"}
-_CIERRAN = {"turno_completo", "interrumpido"}
+_LIB = RAIZ / "static" / "library"
 
 
-class SesionConCitas(SesionVoz):
-    """SesionVoz + numeración de respuestas + eventos 'cita'."""
+def _en_biblioteca(nombre: str) -> str:
+    return nombre if nombre and (_LIB / nombre).exists() else ""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._turno = 1
-        self._abierto = False        # ha llegado contenido de la respuesta en curso
-        self._ultimo_cierre = None   # número del último turno cerrado
-        self._citas_turno: set = set()
-        self._n_cita = 0
 
+def _cabecera(archivo: str) -> list[str]:
+    """Column names of a library table (first CSV row), longest first so 'Burning rate; mm' wins over 'Burning rate'."""
+    import csv
+    try:
+        with open(_LIB / archivo, encoding="utf-8") as f:
+            return sorted((h.strip() for h in next(csv.reader(f))), key=len, reverse=True)
+    except Exception:
+        return []
+
+
+def cita_interna(c: dict) -> dict:
+    """Cita del servidor del equipo -> referencia al archivo de base_de_datos en la biblioteca de la web."""
+    c = dict(c)
+    c.pop("url", None)  # nada de enlaces externos: el DOI se muestra solo como identificador
+    acc = c.get("accesion") or (re.search(r"PSI-\d+", str(c.get("tabla") or c.get("fuente") or "")) or [None])[0] or ""
+    if c.get("tipo") == "tabla" and c.get("tabla"):
+        c["archivo"] = _en_biblioteca(_slug(str(c["tabla"])) + ".csv") or _en_biblioteca(_slug(acc) + ".md")
+        consulta = str(c.get("consulta") or "")
+        columnas = [h for h in _cabecera(c["archivo"]) if h and h in consulta]  # real headers named in the query
+        # drop a shorter header contained in a longer one already matched
+        c["columnas"] = [h for i, h in enumerate(columnas) if not any(h in o for o in columnas[:i])]
+    else:
+        c["archivo"] = _en_biblioteca(_slug(acc) + ".md")
+    return c
+
+
+class SesionFlama(SesionVoz):
     async def _emitir(self, evento: dict) -> None:
-        tipo = evento.get("tipo")
-        if tipo in _ABREN:
-            self._abierto = True
-            evento.setdefault("turno", self._turno)
-        elif tipo in _CIERRAN:
-            if not self._abierto and self._ultimo_cierre is not None:
-                # p. ej. 'interrumpido' seguido de 'turno_completo' de la misma respuesta
-                evento["turno"] = self._ultimo_cierre
-            else:
-                evento["turno"] = self._turno
-                self._ultimo_cierre = self._turno
-                self._turno += 1
-                self._abierto = False
-                self._citas_turno, self._n_cita = set(), 0
+        if evento.get("tipo") == "cita" and isinstance(evento.get("cita"), dict):
+            evento = {**evento, "cita": cita_interna(evento["cita"])}
         await super()._emitir(evento)
 
-    async def _atender_herramientas_(self, sesion, llamadas) -> None:
-        async def una(fc) -> types.FunctionResponse:
-            argumentos = dict(fc.args or {})
-            await self._emitir({"tipo": "herramienta", "nombre": fc.name, "argumentos": argumentos})
-            resultado = await asyncio.to_thread(herramientas.ejecutar, fc.name, argumentos)
-            resumen = json.dumps(resultado, ensure_ascii=False, default=str)
-            await self._emitir({"tipo": "resultado_herramienta", "nombre": fc.name,
-                                "resumen": resumen[:600] + ("…" if len(resumen) > 600 else "")})
-            if fc.name == "buscar_documentos" and resultado.get("resultados"):
-                fuentes = [{"fuente": r["fuente"], "pagina": r["pagina"]} for r in resultado["resultados"]]
-                await self._emitir({"tipo": "fuentes", "fuentes": fuentes})
-            for cita in citas_de(fc.name, argumentos, resultado):
-                k = clave(cita)
-                if k in self._citas_turno:
-                    continue
-                self._citas_turno.add(k)
-                self._n_cita += 1
-                await self._emitir({"tipo": "cita", "turno": self._turno, "id": self._n_cita, "cita": cita})
-            return types.FunctionResponse(id=fc.id, name=fc.name, response=resultado)
 
-        respuestas = await asyncio.gather(*(una(fc) for fc in llamadas))
-        await sesion.send_tool_response(function_responses=list(respuestas))
+SesionConCitas = SesionFlama  # nombre anterior (ia_web/servidor_simulado.py)
 
-
-# El servidor original crea SesionVoz por conexión: se sustituye por la versión con citas.
-servidor.SesionVoz = SesionConCitas
-app = servidor.app
-app.add_middleware(
-    CORSMiddleware,
-    # local development + the public Streamlit Community Cloud app (+ extra origins via FLAMA_CORS_ORIGINS)
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https://[a-z0-9-]+\.streamlit\.app"
-    + "".join("|" + __import__("re").escape(o.strip()) for o in os.getenv("FLAMA_CORS_ORIGINS", "").split(",") if o.strip()),
-    allow_methods=["GET", "POST"], allow_headers=["*"],
-)
+# El servidor del equipo crea SesionVoz por conexión: se usa la versión con referencias internas.
+servidor.SesionVoz = SesionFlama
+app = servidor.app  # ya trae CORS (ORIGENES_PERMITIDOS en voz/.env, "*" por defecto)
 
 MODO_SIMULADO = False  # servidor_simulado.py lo pone a True
 

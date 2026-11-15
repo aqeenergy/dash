@@ -119,16 +119,34 @@ async def prueba_paralelo():
     async def nada(_):
         pass
 
-    ses = SesionVoz(nada, nada, cliente=cliente)
+    eventos = []
+
+    async def guarda(e):
+        eventos.append(e)
+
+    ses = SesionVoz(nada, guarda, cliente=cliente)
     tarea = asyncio.create_task(ses.ejecutar())
     await asyncio.wait_for(s.listo.wait(), 5)
     await ses.cerrar()
     await asyncio.wait_for(tarea, 3)
-    return [r.id for r in s.respuestas]
+    return [r.id for r in s.respuestas], [e for e in eventos if e["tipo"] == "cita"]
 
 
-ids = asyncio.run(prueba_paralelo())
+ids, citas_emitidas = asyncio.run(prueba_paralelo())
 comprobar("dos consultas a la vez -> respuestas en orden", ids == ["1", "2"], ids)
+c = citas_emitidas[0] if citas_emitidas else {}
+comprobar("evento 'cita' con investigación, DOI y nº de respuesta",
+          len(citas_emitidas) == 1 and c["turno"] == 1 and c["cita"]["accesion"] == "PSI-69"
+          and c["cita"]["url"] == "https://doi.org/10.60555/mbq8-0451",
+          c.get("cita", {}).get("investigacion"))
+r = herramientas.ejecutar("estadisticas_tabla", {"tabla": "PSI-69_Experimental table_FLEX",
+                                                 "columnas": ["Burning rate; mm"], "agrupar_por": "Fuel"})
+cs = herramientas.citas("estadisticas_tabla", {"tabla": "PSI-69_Experimental table_FLEX",
+                                               "columnas": ["Burning rate; mm"], "agrupar_por": "Fuel"}, r)
+comprobar("cita de estadísticas agrupadas con nº de ensayos", cs and cs[0]["filas"] == 274, cs and cs[0]["filas"])
+comprobar("consultas fallidas o listar_tablas no generan citas",
+          herramientas.citas("consultar_tabla", {}, {"error": "x"}) == []
+          and herramientas.citas("listar_tablas", {}, {"tablas": []}) == [])
 
 # 7. El contador de conversaciones no se queda bloqueado si una sesión falla al crearse
 from fastapi.testclient import TestClient  # noqa: E402

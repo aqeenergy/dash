@@ -4,6 +4,10 @@ pandas
 openpyxl          # tablas .xlsx
 xlrd              # tablas .xls
 pypdf
+python-docx       # leer y crear documentos Word
+fpdf2             # crear documentos PDF
+matplotlib        # gráficas
+python-multipart  # subir archivos al servidor
 python-dotenv
 fastapi
 uvicorn[standard]

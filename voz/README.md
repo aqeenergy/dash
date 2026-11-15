@@ -1,14 +1,20 @@
-# 🔥 IA de voz (carpeta `voz/`)
+# 🔥 IA de voz y texto (carpeta `ia_voz_texto/`)
 
-Asistente de voz en tiempo real, experta en combustión en microgravedad y seguridad contra incendios.
+Asistente de IA para conversar por voz o por texto en tiempo real, experta en combustión en microgravedad y seguridad contra incendios.
 NASA Space Apps Challenge 2026, sede de Sevilla.
 
 - **Voz:** Gemini Live API (`gemini-3.1-flash-live-preview`, plan gratuito). Se le puede interrumpir mientras habla.
 - **Conocimiento:** los datos reales del NASA PSI que ya están en el repositorio (`datos_psi/`):
   - RAG sobre las 24 fichas de investigación (objetivos, enfoque, hipótesis, publicaciones, DOI),
-    convertidas a Markdown en `voz/documentos/psi/`, más los PDF que añadáis a `voz/documentos/`.
+    convertidas a Markdown en `ia_voz_texto/documentos/psi/`, más los PDF que añadáis a `ia_voz_texto/documentos/`.
   - Herramientas que consultan las 23 tablas experimentales (FLEX, BASS, Saffire, ACME, SAME, SPICE...):
     `listar_tablas`, `describir_tabla`, `consultar_tabla` y `estadisticas_tabla`.
+- **Documentos:** se le pueden subir PDF, Word, TXT o MD (busca en ellos, los lee enteros y los cita) y
+  puede crear documentos (informes, resúmenes…) en Markdown, Word y PDF con sus fuentes.
+- **Escenarios de riesgo:** ante "¿qué pasaría si arde X con tanto oxígeno y tal ventilación?", busca los
+  ensayos reales más parecidos (Saffire, BASS, SAME, FLEX, CFI, CFI-G), cuenta qué pasó y avisa si el
+  escenario queda fuera de lo ensayado.
+- **Gráficas:** barras (medias por grupo con nº de ensayos), dispersión e histograma de cualquier tabla.
 - **Coste:** 0 € para desarrollar y probar (plan gratuito de Google AI Studio). Para una web pública
   con usuarios en la UE, las condiciones de Google exigen el plan de pago: ver la sección 4.
 
@@ -23,10 +29,10 @@ La clave de API y los datos se quedan en el servidor; el navegador solo envía y
 
 ## 1. Puesta en marcha (unos 10 minutos)
 
-Todo se ejecuta desde la carpeta `voz/`:
+Todo se ejecuta desde la carpeta `ia_voz_texto/`:
 
 ```bash
-cd voz
+cd ia_voz_texto
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.ejemplo .env        # y pegad la clave de https://aistudio.google.com/apikey
@@ -34,18 +40,23 @@ cp .env.ejemplo .env        # y pegad la clave de https://aistudio.google.com/ap
 
 1. (Ya hecho y subido) `python preparar_documentos.py` convierte las fichas `datos_psi/.../metadatos/PSI-*.json`
    en documentos para el RAG. Solo hay que repetirlo si se actualizan las fichas.
-2. Construid el índice: `python ingestar.py` (debe decir `embeddings: sí`). Repetidlo si añadís PDFs a `voz/documentos/`.
-   Conviene subir la carpeta `voz/indice/` al repositorio: así el servidor desplegado no tiene que regenerarla.
+2. Construid el índice: `python ingestar.py` (debe decir `embeddings: sí`). Repetidlo si añadís PDFs a `ia_voz_texto/documentos/`.
+   Conviene subir la carpeta `ia_voz_texto/indice/` al repositorio: así el servidor desplegado no tiene que regenerarla.
 3. Comprobad los datos sin gastar cuota de voz: `python prueba_herramientas.py "limiting oxygen index"`
 4. Hablad con la IA desde la terminal, con auriculares: `python prueba_terminal.py`
    (o `python prueba_terminal.py --texto` para escribir las preguntas).
-   Con `--grabar` se guarda cada conversación en `voz/grabaciones/AAAAMMDD-HHMMSS/`: `conversacion.md`
+   Con `--grabar` se guarda cada conversación en `ia_voz_texto/grabaciones/AAAAMMDD-HHMMSS/`: `conversacion.md`
    (cronología con consultas, resultados y latencias), `eventos.jsonl`, `microfono.wav`, `ia.wav` y
    `conversacion.wav` (las dos voces mezcladas y sincronizadas, para escuchar o compartir).
    Esa carpeta no se sube a GitHub.
 
-Para comprobar que el código funciona sin clave: `python tests/test_simulado.py`, `python tests/test_errores.py`
-y `python tests/test_optimizaciones.py`.
+Para comprobar que el código funciona sin clave: `python tests/test_simulado.py`, `python tests/test_errores.py`,
+`python tests/test_optimizaciones.py`, `python tests/test_documentos.py`, `python tests/test_escenarios_graficas.py` y `python tests/test_verificador.py`.
+
+**Banco de pruebas con Gemini real** (antes de la demo o tras cualquier cambio): `python evaluar.py` hace 17
+preguntas con respuesta conocida (cifras de FLEX, Saffire, DOI, trampas, seguridad, inglés, escenario, gráfica
+y documento) y dice cuántas acierta, por qué falla cada una y la latencia media. `python evaluar.py --rapido`
+se salta las que crean archivos; `python evaluar.py flex` hace solo las de FLEX. Informe en `evaluaciones/`.
 
 ## 2. Integración con la web (para quien hace la web)
 
@@ -78,11 +89,89 @@ uvicorn ia_llama.servidor:app --host 0.0.0.0 --port 8001
 | IA → web | JSON | `herramienta`: está consultando datos (`nombre`, `argumentos`); útil para mostrar "🔎 buscando..." |
 | IA → web | JSON | `resultado_herramienta` (`nombre`, `resumen`): qué devolvió la consulta, recortado (para depurar; la web puede ignorarlo) |
 | IA → web | JSON | `fuentes`: documentos usados (`fuente`, `pagina`) |
-| IA → web | JSON | `interrumpido`: la persona habló encima; **hay que vaciar el audio pendiente** |
+| IA → web | JSON | `grafica` (`turno`, `titulo`, `url`, `datos`): la IA ha dibujado una gráfica. `http://localhost:8001` + `url` es el PNG; `datos` permite dibujarla interactiva o como tabla. Ver "Gráficas" |
+| IA → web | JSON | `documento_creado` (`turno`, `titulo`, `archivos`): la IA ha creado un documento; mostrad los enlaces de descarga. Ver "Documentos" |
+| IA → web | JSON | `cita` (`turno`, `id`, `cita`): referencia de cada tabla o documento consultado para la respuesta número `turno`. Ver abajo |
+| IA → web | JSON | `interrumpido` (`turno`): la persona habló encima; **hay que vaciar el audio pendiente** |
 | IA → web | JSON | `aviso` (`mensaje`): algo pasa pero se resuelve solo (límite por minuto, modelo de reserva...). Mostradlo |
-| IA → web | JSON | `diagnostico`: información técnica (p. ej. respuesta atascada). Queda en las grabaciones; la web puede ignorarlo |
+| IA → web | JSON | `diagnostico`: información técnica (respuesta atascada, `accion_no_realizada`...). Queda en las grabaciones; la web puede ignorarlo |
 | IA → web | JSON | `en_pausa`: Gemini cerró por inactividad (p. ej. nadie habla ni escribe); se reanuda sola, con la misma conversación, en cuanto llega audio o texto |
-| IA → web | JSON | `turno_completo`, `reconectando`, `error` (`mensaje`): con `error` la sesión termina y hay que reconectar |
+| IA → web | JSON | `turno_completo` (`turno`): la respuesta número `turno` ha terminado y ya han llegado todas sus citas |
+| IA → web | JSON | `reconectando`, `error` (`mensaje`): con `error` la sesión termina y hay que reconectar |
+
+### Documentos: subir y crear
+
+**Subir** (PDF, Word .docx, TXT o MD; hasta 20 MB): `POST /ia/documentos` con el archivo en el campo `archivo`.
+El servidor extrae el texto, lo indexa y desde ese momento la IA puede buscar en él, leerlo entero y citarlo.
+Responde `{"nombre", "fuente", "fragmentos", "caracteres", "busqueda_semantica"}`, o un error 400 con un
+mensaje claro (formato no admitido, vacío, demasiado grande, PDF escaneado sin texto…).
+
+```js
+const fd = new FormData();
+fd.append("archivo", input.files[0]);
+const r = await fetch("http://localhost:8001/ia/documentos", { method: "POST", body: fd });
+const info = await r.json();          // si !r.ok: info.detail explica el problema
+// Opcional: avisar a la IA en la conversación
+ws.send(JSON.stringify({ tipo: "texto", texto: `Te he subido el documento ${info.nombre}.` }));
+```
+
+`GET /ia/documentos` lista los documentos subidos, los de base (fichas PSI) y los creados por la IA.
+
+**Crear**: si se lo piden ("hazme un informe de FLEX", "crea un resumen de lo que hemos hablado"), la IA
+consulta los datos y redacta el documento con una sección de fuentes. Se guarda en Markdown, Word y PDF y la
+web recibe:
+
+```json
+{"tipo": "documento_creado", "turno": 4, "titulo": "Informe FLEX", "archivos": [
+  {"formato": "md",   "nombre": "20261114-1858_Informe_FLEX.md",   "url": "/ia/generados/20261114-1858_Informe_FLEX.md"},
+  {"formato": "docx", "nombre": "20261114-1858_Informe_FLEX.docx", "url": "/ia/generados/20261114-1858_Informe_FLEX.docx"},
+  {"formato": "pdf",  "nombre": "20261114-1858_Informe_FLEX.pdf",  "url": "/ia/generados/20261114-1858_Informe_FLEX.pdf"}]}
+```
+
+Las `url` son relativas al servidor de la IA: `http://localhost:8001` + `url` descarga el archivo.
+Los documentos subidos (`documentos_subidos/`, `indice_subidos/`) y creados (`documentos_generados/`) no se suben a GitHub.
+
+### Gráficas
+
+Cuando piden "enséñame…" o "haz una gráfica…", la IA llama a `crear_grafica` y la web recibe:
+
+```json
+{"tipo": "grafica", "turno": 5, "titulo": "Tasa de combustión media por combustible",
+ "url": "/ia/graficas/20261114-210413_barras_PSI-69_Experimental_table_FLEX.png",
+ "datos": {"tipo": "barras", "eje_y": "Burning rate (prob. mm²/s, sin confirmar)",
+           "filas": [{"grupo": "Heptane", "media": 0.5448, "ensayos": 107, "desviacion": 0.161}, ...]}}
+```
+
+Lo más sencillo es mostrar el PNG (`<img src="http://localhost:8001` + `url">`). `datos` trae lo mismo en bruto:
+`filas` (barras), `puntos` con `x`, `y`, `grupo` (dispersión) o `bordes` y `series` (histograma), por si queréis
+dibujarla interactiva o enseñarla como tabla (recomendable por accesibilidad). Las gráficas se guardan en
+`graficas/` (no se sube a GitHub) y la cita correspondiente llega como siempre en un evento `cita`.
+
+### Escenarios de riesgo
+
+No necesitan nada especial en la web: la IA responde con texto y voz, y las citas de cada experimento comparado
+llegan como eventos `cita` con la consulta `escenario: material=..., oxigeno_pct=...`.
+
+### Citas: de dónde sale cada respuesta
+
+Cada vez que la IA consulta una tabla o un documento, el servidor envía un evento `cita` con el número de la
+respuesta (`turno`) a la que pertenece. Las respuestas se numeran 1, 2, 3… y `turno_completo` / `interrumpido`
+llevan el mismo número, así que la web puede agrupar las citas bajo cada respuesta.
+
+```json
+{"tipo": "cita", "turno": 3, "id": 7, "cita": {
+  "tipo": "tabla", "investigacion": "FLEX", "accesion": "PSI-69",
+  "titulo": "Flame Extinguishment Experiment", "doi": "10.60555/mbq8-0451",
+  "url": "https://doi.org/10.60555/mbq8-0451",
+  "tabla": "PSI-69_Experimental table_FLEX",
+  "consulta": "columnas: Burning rate; mm; agrupado por Fuel", "filas": 274}}
+```
+
+Para documentos, `"tipo": "documento"` y en lugar de `tabla`/`consulta`/`filas` llegan `fuente`, `pagina` y
+`extracto` (unas 300 letras del fragmento usado). Si una respuesta termina sin ninguna cita, la IA no consultó
+datos: es una explicación general (o una pregunta de aclaración) y conviene indicarlo así en la web.
+
+Las citas dicen **qué se consultó para esa respuesta**, no qué frase sale de qué fuente.
 
 ### Referencia JavaScript: micro a 16 kHz y altavoz a 24 kHz
 
@@ -166,6 +255,7 @@ dispositivo hace falta HTTPS (por ejemplo, con un túnel: `cloudflared tunnel --
 | Límite por minuto (429) | Espera 2, 4, 8, 12, 16, 20, 30 y 40 s, avisando con `aviso` |
 | Conexión caída | Reconecta (3, 6, 12, 20 s) recuperando la conversación |
 | Respuesta atascada a mitad de frase (Gemini deja de enviar nada durante `SEGUNDOS_ATASCO`, 10 s) | Le da un toque (`TEXTO_TOQUE`) para que termine; si tras dos toques sigue parada, reconecta recuperando la conversación. Deja un evento `diagnostico` |
+| La IA dice "he creado el informe" (o "te muestro la gráfica") sin haber llamado a la herramienta | El verificador de acciones lo detecta al terminar la respuesta y le pide en privado que llame de verdad a `crear_documento` / `crear_grafica` (una vez por pregunta). Deja un `diagnostico` con `suceso: accion_no_realizada`; la web verá llegar el `documento_creado` o la `grafica` en la respuesta siguiente. Se desactiva con `VERIFICAR_ACCIONES=0` |
 | Un error que se repite en cada conexión | Como mucho 4 reintentos y después `error`: nunca reconecta en bucle |
 
 Para que nadie agote la cuota de todos: máximo `MAX_SESIONES_SIMULTANEAS` (3) a la vez,
