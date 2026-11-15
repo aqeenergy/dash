@@ -63,3 +63,7 @@ MAX_MINUTOS_SESION = int(os.getenv("MAX_MINUTOS_SESION", "15"))
 # --- Audio (lo fija la API Live; no cambiar) ---
 FRECUENCIA_ENTRADA = 16000  # PCM 16 bits mono little-endian
 FRECUENCIA_SALIDA = 24000  # PCM 16 bits mono little-endian
+
+# Archivos que crea la IA (gráficas e informes); en Render son temporales, basta para la sesión
+DIR_GENERADOS = Path(os.getenv("DIR_GENERADOS", RAIZ / "documentos_generados"))
+DIR_GRAFICAS = Path(os.getenv("DIR_GRAFICAS", RAIZ / "graficas"))

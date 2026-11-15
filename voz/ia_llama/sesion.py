@@ -159,7 +159,7 @@ class SesionVoz:
                     if fallidos_seguidos >= len(modelos):  # ya se han probado todos
                         if tipo == "saturado":
                             await self._emitir({"tipo": "aviso", "mensaje":
-                                "All of Google's models are busy; retrying in 30 s."})
+                                "The onboard AI is busy; retrying in 30 s."})
                             await asyncio.sleep(30)
                             i, fallidos_seguidos, self._handle = 0, 0, None
                             continue
@@ -173,7 +173,7 @@ class SesionVoz:
                 if tipo == "limite":
                     if intentos_limite >= len(errores.ESPERAS_LIMITE):
                         await self._emitir({"tipo": "error", "mensaje":
-                            "Gemini rate limit reached. Please try again in a minute."})
+                            "The onboard AI is busy. Please try again in a minute."})
                         break
                     espera = errores.ESPERAS_LIMITE[intentos_limite]
                     intentos_limite += 1
@@ -183,7 +183,7 @@ class SesionVoz:
 
                 # red u otro: reconectar (con el handle se recupera la conversación)
                 if intentos_red >= len(errores.ESPERAS_RED):
-                    await self._emitir({"tipo": "error", "mensaje": f"Could not keep the connection: {e}"})
+                    await self._emitir({"tipo": "error", "mensaje": "Lost the connection to the onboard AI. Press Reconnect."})
                     break
                 espera = errores.ESPERAS_RED[intentos_red]
                 intentos_red += 1

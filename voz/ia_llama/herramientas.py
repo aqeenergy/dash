@@ -5,7 +5,7 @@ import json
 import logging
 from functools import lru_cache
 
-from . import config, datos
+from . import config, datos, documentos, escenarios, graficas
 from .rag import Indice
 
 log = logging.getLogger(__name__)
@@ -110,6 +110,75 @@ DECLARACIONES = [
     },
 ]
 
+DECLARACIONES += [
+    {
+        "name": "crear_documento",
+        "description": (
+            "Crea un documento descargable (Markdown, Word y PDF) cuando el usuario pida un informe, "
+            "resumen, ficha, lista de recomendaciones o similar. Es la ÚNICA forma de crear un archivo: "
+            "si no la llamas, no existe ningún documento. Antes, consulta los datos necesarios. "
+            "El contenido va en Markdown (# títulos, - viñetas, **negrita**) y debe terminar con una "
+            "sección '## Fuentes' con la investigación, la accesión PSI y el DOI de lo consultado."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "titulo": {"type": "STRING"},
+                "contenido": {"type": "STRING", "description": "Texto completo del documento en Markdown."},
+            },
+            "required": ["titulo", "contenido"],
+        },
+    },
+]
+
+DECLARACIONES += [
+    {
+        "name": "evaluar_escenario",
+        "description": (
+            "Para preguntas de riesgo o '¿qué pasaría si...?' sobre un incendio (un material o combustible "
+            "con cierto oxígeno, ventilación o presión): busca los ensayos reales del NASA PSI más parecidos "
+            "(Saffire, BASS, SAME, FLEX, CFI, CFI-G) y devuelve qué pasó en ellos, qué condiciones se "
+            "ensayaron y si el escenario queda fuera de lo ensayado. Rellena solo lo que diga el usuario."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "material": {"type": "STRING", "description": "Material o combustible (en español o inglés): algodón, PMMA, Nomex, silicona, heptano, metanol, propano..."},
+                "oxigeno_pct": {"type": "NUMBER", "description": "Oxígeno en % (el aire normal es 21)."},
+                "flujo_aire_cm_s": {"type": "NUMBER", "description": "Velocidad del aire en cm/s (ventilación)."},
+                "presion_atm": {"type": "NUMBER", "description": "Presión en atmósferas (1 = nivel del mar)."},
+                "tipo": {"type": "STRING", "enum": ["solido", "liquido", "gas"]},
+            },
+        },
+    },
+]
+
+DECLARACIONES += [
+    {
+        "name": "crear_grafica",
+        "description": (
+            "Dibuja una gráfica de una tabla para mostrarla en pantalla cuando pidan verla, compararla o "
+            "visualizarla ('enséñame...', 'haz una gráfica...'). Tipos: 'barras' = media de y por grupo "
+            "(agrupar_por obligatorio, p. ej. Fuel); 'dispersion' = y frente a x (x obligatorio), con hasta "
+            "3 grupos de color; 'histograma' = cómo se reparten los valores de y."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "tabla": {"type": "STRING"},
+                "tipo": {"type": "STRING", "enum": list(graficas.TIPOS)},
+                "y": {"type": "STRING", "description": "Columna numérica a dibujar."},
+                "x": {"type": "STRING", "description": "Columna del eje horizontal (solo dispersión)."},
+                "agrupar_por": {"type": "STRING", "description": "Columna de grupos (obligatoria en barras)."},
+                "filtros": _FILTROS,
+                "titulo": {"type": "STRING", "description": "Título en el idioma de la pregunta (en inglés si preguntan en inglés)."},
+            },
+            "required": ["tabla", "tipo", "y"],
+        },
+    },
+]
+
+
 HERRAMIENTAS_GEMINI = [{"function_declarations": DECLARACIONES}]
 
 
@@ -139,6 +208,9 @@ FUNCIONES = {
     "describir_tabla": datos.describir_tabla,
     "consultar_tabla": datos.consultar_tabla,
     "estadisticas_tabla": datos.estadisticas_tabla,
+    "crear_documento": documentos.crear,
+    "evaluar_escenario": escenarios.evaluar,
+    "crear_grafica": graficas.crear,
 }
 
 
@@ -156,7 +228,7 @@ def ejecutar(nombre: str, argumentos: dict | None) -> dict:
         return {"error": mensaje}
     # Red de seguridad: que una respuesta enorme no sature el contexto del modelo
     texto = json.dumps(resultado, ensure_ascii=False, default=str)
-    if len(texto) > 20000:
+    if len(texto) > 20000 and nombre != "crear_grafica":
         return {"aviso": "Resultado recortado por tamaño; pide menos filas o filtra más.",
                 "resultado_parcial": texto[:20000]}
     return resultado

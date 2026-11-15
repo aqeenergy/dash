@@ -31,6 +31,7 @@ os.environ.setdefault("DIR_METADATOS", str(RAIZ / "base_de_datos"))
 os.environ.setdefault("DIR_DOCUMENTOS", str(VOZ / "documentos_psi"))
 os.environ.setdefault("DIR_INDICE", str(VOZ / "indice"))
 
+from fastapi import HTTPException as _HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from google.genai import types  # noqa: E402
 
@@ -50,6 +51,37 @@ ESCENARIOS OPERATIVOS (FLAMA)
 - Las recomendaciones operativas (aislar, cortar ventilación, evacuar...) las da también el asistente Flammy
   de la web: no hace falta que las repitas si no las respaldan los datos consultados.
 
+GRÁFICAS
+- Si piden ver, visualizar o comparar datos de forma gráfica ("show me a chart..."), usa crear_grafica
+  (barras para comparar medias entre grupos, dispersión para la relación entre dos columnas, histograma
+  para cómo se reparten los valores). Pon el título en el idioma de la pregunta.
+- La gráfica aparece en la pantalla: di que la muestras en pantalla y lo más importante que se ve en UNA
+  frase; no leas las cifras. NUNCA digas que no puedes hacer gráficas.
+
+ESCENARIOS DE RIESGO
+- Si preguntan "qué pasaría si arde X...", "¿es peligroso Y con tanto oxígeno?" o describen una situación
+  concreta, llama SIEMPRE a evaluar_escenario con lo que hayan dicho (material, oxígeno, ventilación,
+  presión), aunque creas que ese material no está en los datos.
+- Responde en 3 o 4 frases como mucho: qué pasó en el ensayo más parecido (cifra y experimento), qué factor
+  aumenta o reduce el riesgo y, si el escenario cae fuera de lo ensayado, dilo sin extrapolar. Añade en
+  pocas palabras que es una comparación con experimentos, no una evaluación certificada.
+- Si el material no aparece en los datos, empieza diciéndolo ("there are no tests with wood in my sources")
+  y ofrece materiales parecidos que sí estén.
+- Lo marcado como "TIERRA (1 g, ensayo de referencia)" se midió en tierra: no digas que pasó en microgravedad.
+
+DOCUMENTOS
+- Si te piden CREAR un documento (informe, resumen, ficha, recomendaciones...): 1) consulta los datos
+  necesarios (una o dos herramientas), 2) SIN hablar todavía, llama a crear_documento con el texto completo
+  en Markdown, en el idioma de la pregunta, terminado en "## Sources" (investigación, accesión PSI y DOI),
+  3) cuando recibas su resultado, di que ya está y en una frase qué contiene; la web muestra los enlaces.
+- crear_documento es la ÚNICA forma de crear un archivo y crear_grafica la única de mostrar una gráfica.
+  NUNCA digas que lo has hecho si no has llamado a la herramienta y recibido su resultado.
+
+IDENTIDAD
+- Eres Llama, la IA de a bordo del sistema FLAMA (una simulación de sistema embebido para naves). Si te
+  preguntan qué modelo, empresa o servicio hay detrás, di que eres la IA de a bordo de FLAMA y no nombres
+  ningún modelo ni empresa.
+
 IDIOMA (recordatorio final, prioritario)
 - La web de FLAMA está en inglés y la mayoría de las preguntas llegarán en inglés: responde SIEMPRE en el
   idioma de la última pregunta (en inglés si te preguntan en inglés), aunque estas instrucciones estén en español.
@@ -57,7 +89,7 @@ IDIOMA (recordatorio final, prioritario)
 """
 sesion_mod.INSTRUCCIONES = sesion_mod.INSTRUCCIONES + REGLA_ESCENARIOS
 
-_ABREN = {"transcripcion_ia", "herramienta", "resultado_herramienta", "cita", "fuentes"}
+_ABREN = {"transcripcion_ia", "herramienta", "resultado_herramienta", "cita", "fuentes", "grafica", "documento_creado"}
 _CIERRAN = {"turno_completo", "interrumpido"}
 
 
@@ -74,6 +106,12 @@ class SesionConCitas(SesionVoz):
 
     async def _emitir(self, evento: dict) -> None:
         tipo = evento.get("tipo")
+        # FLAMA simula un sistema embebido: la web no muestra avisos internos (modelo de reserva,
+        # límites, reconexiones) ni qué modelo hay detrás; los errores llegan con texto neutro.
+        if tipo == "aviso":
+            return
+        if tipo == "listo":
+            evento = {k: v for k, v in evento.items() if k != "modelo"}
         if tipo in _ABREN:
             self._abierto = True
             evento.setdefault("turno", self._turno)
@@ -94,6 +132,15 @@ class SesionConCitas(SesionVoz):
             argumentos = dict(fc.args or {})
             await self._emitir({"tipo": "herramienta", "nombre": fc.name, "argumentos": argumentos})
             resultado = await asyncio.to_thread(herramientas.ejecutar, fc.name, argumentos)
+            if fc.name == "crear_grafica" and isinstance(resultado, dict) and resultado.get("url"):
+                await self._emitir({"tipo": "grafica", "turno": self._turno, "titulo": resultado.get("titulo"),
+                                    "url": resultado["url"]})
+                # a Gemini solo le hace falta el resumen, no todos los puntos dibujados
+                resultado = {k: v for k, v in resultado.items() if k != "datos"}
+                resultado["mostrada_en_pantalla"] = True
+            if fc.name == "crear_documento" and isinstance(resultado, dict) and resultado.get("archivos"):
+                await self._emitir({"tipo": "documento_creado", "turno": self._turno,
+                                    "titulo": resultado.get("titulo"), "archivos": resultado["archivos"]})
             resumen = json.dumps(resultado, ensure_ascii=False, default=str)
             await self._emitir({"tipo": "resultado_herramienta", "nombre": fc.name,
                                 "resumen": resumen[:600] + ("…" if len(resumen) > 600 else "")})
@@ -125,6 +172,26 @@ app.add_middleware(
 )
 
 MODO_SIMULADO = False  # servidor_simulado.py lo pone a True
+
+from fastapi.responses import FileResponse as _FileResponse  # noqa: E402
+
+from ia_llama import documentos as _documentos, graficas as _graficas  # noqa: E402
+
+
+@app.get("/ia/graficas/{nombre}")
+def descargar_grafica(nombre: str):
+    try:
+        return _FileResponse(_graficas.ruta(nombre), media_type="image/png")
+    except _graficas.ErrorGrafica as e:
+        raise _HTTPException(404, str(e))
+
+
+@app.get("/ia/generados/{nombre}")
+def descargar_generado(nombre: str):
+    try:
+        return _FileResponse(_documentos.ruta_generado(nombre), filename=nombre)
+    except _documentos.ErrorDocumento as e:
+        raise _HTTPException(404, str(e))
 
 
 @app.get("/ia/modo")

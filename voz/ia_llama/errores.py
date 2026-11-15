@@ -16,14 +16,14 @@ import re
 
 MENSAJES = {
     "inactividad": "Session paused for inactivity; it will resume with your next question.",
-    "clave": "The AI server's Gemini key is not valid or has no access.",
-    "region": "Google does not allow this model from this location or plan.",
-    "modelo": "Model not available; trying the next one.",
-    "saturado": "Google's models are busy; using a backup model.",
-    "cuota_dia": "The daily Gemini quota has run out. Please try again later.",
-    "limite": "Rate limit reached; waiting a few seconds...",
-    "red": "Lost the connection to Gemini; reconnecting...",
-    "otro": "Unexpected error with Gemini; retrying...",
+    "clave": "The onboard AI is not available right now.",
+    "region": "The onboard AI is not available right now.",
+    "modelo": "Restarting the onboard AI...",
+    "saturado": "The onboard AI is busy; one moment...",
+    "cuota_dia": "The onboard AI has reached its usage limit for today. Please try again later.",
+    "limite": "The onboard AI is busy; one moment...",
+    "red": "Reconnecting the onboard AI...",
+    "otro": "The onboard AI hit an error; retrying...",
 }
 
 # Esperas (segundos) para reintentar cuando el límite es por minuto o hay fallos de red

@@ -202,6 +202,25 @@
         }
         break;
       }
+      case "grafica": {   // chart drawn by the AI (crear_grafica): PNG served by the AI server
+        const t = turno(ev.turno);
+        const f = document.createElement("figure"); f.className = "ia-grafica";
+        const src = BASE_HTTP + String(ev.url || "");
+        f.innerHTML = `<a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="${esc(ev.titulo || "Chart")}" loading="lazy"></a>` +
+          (ev.titulo ? `<figcaption>${esc(ev.titulo)}</figcaption>` : "");
+        f.querySelector("img").addEventListener("load", bajar);
+        t.el.insertBefore(f, t.el.querySelector(".ia-pie")); bajar();
+        break;
+      }
+      case "documento_creado": {   // report written by the AI (crear_documento): download links
+        const t = turno(ev.turno);
+        const d = document.createElement("div"); d.className = "ia-documento";
+        const enlaces = (ev.archivos || []).map((a) =>
+          `<a class="ia-mini" href="${esc(BASE_HTTP + String(a.url || ""))}" target="_blank" rel="noopener" download>${esc(String(a.formato || "").toUpperCase())}</a>`).join(" ");
+        d.innerHTML = `<span class="ia-documento-titulo">📄 ${esc(ev.titulo || "Report")}</span><span class="ia-documento-enlaces">${enlaces}</span>`;
+        t.el.insertBefore(d, t.el.querySelector(".ia-pie")); bajar();
+        break;
+      }
       case "aviso": nodo("ia-aviso", esc(ev.mensaje)); break;
       case "en_pausa": estado("pausa"); break;
       case "reconectando": estado("conectando", "Reconnecting to the AI…"); break;

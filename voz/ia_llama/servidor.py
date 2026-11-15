@@ -85,7 +85,7 @@ def salud() -> dict:
 async def ws_voz(ws: WebSocket) -> None:
     global _activas
     await ws.accept()
-    motivo = "The AI server has no GEMINI_API_KEY configured." if not config.GEMINI_API_KEY else _motivo_rechazo(_ip(ws))
+    motivo = "The onboard AI is not configured." if not config.GEMINI_API_KEY else _motivo_rechazo(_ip(ws))
     if motivo:
         await ws.send_text(json.dumps({"tipo": "error", "mensaje": motivo}, ensure_ascii=False))
         await ws.close()
